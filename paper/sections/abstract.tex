@@ -1,0 +1,28 @@
+% abstract.tex — HapGraph
+% Target: 150-250 words, state problem/method/key result/significance
+
+Inferring the structure and history of human population admixture requires
+knowing both \emph{who mixed with whom} and \emph{when}.
+Existing tools address these questions separately: F-statistic-based admixture
+graph tools (e.g., \treemix{}, \textsc{ADMIXTOOLS2}) estimate topology and
+proportions without timing; timing tools (e.g., \alder{}, \textsc{GLOBETROTTER})
+require a pre-specified topology.
+We introduce \hapgraph{}, a Python package that jointly addresses both
+problems in a two-stage pipeline.
+Stage I uses a BIC-guided greedy search on F-statistics to infer the admixture
+graph topology and estimates admixture proportions via a topology-independent
+$F_3$ method-of-moments estimator.
+Stage II fixes the inferred topology and estimates admixture timing $T$ via
+Bayesian NUTS-MCMC over an IBD segment-length likelihood, exploiting the
+relationship $\mathbb{E}[\bar{L}] = 100/T$~cM between mean IBD segment length
+and admixture time.
+In coalescent simulations across three scenarios (S1: $K=0$, six populations;
+S2: $K=1$; S3: $K=2$, ten populations; $n=20$ seeds each), \hapgraph{}
+achieves a false positive rate of 0\% on pure trees and 100\% recall of true
+admixture target populations across all scenarios.
+Admixture timing estimates under oracle topology achieve MAE of
+$10.9$--$11.4$ generations with 85--93\% empirical 95\% CI coverage.
+Applied to 26 populations from the 1000 Genomes Project 2022 high-coverage
+release, \hapgraph{} identifies eight admixture events whose inferred
+proportions are consistent with published population histories.
+\hapgraph{} is open-source and available at \url{https://github.com/hapgraph/hapgraph}.

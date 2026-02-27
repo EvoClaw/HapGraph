@@ -1,0 +1,100 @@
+% introduction.tex — HapGraph Introduction (v2 — post Phase B review)
+% Fixes: GLOBETROTTER citation, AdmixtureBayes timing clarification,
+%        "well-calibrated" -> specific numbers, T-not-estimated for 1kGP,
+%        S2 over-detection caveat, "incompatible" -> "separate"
+
+The history of human populations is written in patterns of shared and
+divergent genetic variation.
+When two populations exchange migrants — whether through conquest, trade, or
+geographic contact — their descendants carry a mosaic genome encoding
+both the identity of the contributing ancestral groups and the timing of
+the exchange.
+Reconstructing this history requires inferring not only
+\emph{who mixed with whom} (the admixture graph topology and proportions)
+but also \emph{when} (the admixture timing in generations before the present).
+These two questions are today addressed by separate frameworks applied
+sequentially, with no principled joint inference; this gap is the
+motivation for the present work.
+
+\paragraph{Admixture graph inference.}
+The admixture graph — a directed acyclic graph in which internal nodes
+represent ancestral populations and admixture nodes represent lineage mixtures
+— is the standard model for joint representation of population divergence and
+admixture \citep{Reich2009,Patterson2012}.
+\citet{Patterson2012} established that F-statistics provide a rich,
+statistically tractable summary of admixture graph structure:
+negative $F_3(C;\,A,B)$ identifies admixed populations, and $F_4$ statistics
+constrain topology and proportions.
+\treemix{} \citep{Pickrell2012} operationalised this into the first automated
+graph inference tool, using greedy maximum-likelihood search on the $F_2$
+covariance matrix.
+\textsc{ADMIXTOOLS2} \citep{Maier2023} and \textsc{AdmixtureBayes}
+\citep{Nielsen2023} extended the framework with formal Bayesian topology
+search and posterior distributions over graph parameters.
+These tools infer graph topology and admixture proportions with rigour,
+but they do not jointly model the temporal dimension of admixture.
+
+\paragraph{Admixture timing.}
+Haplotype-based methods exploit the fact that admixture introduces ancestral
+segments whose lengths decay over time as recombination fragments them.
+\alder{} \citep{Loh2013} models the decay of weighted linkage disequilibrium
+to estimate $T$ for events $\gtrsim 5$ generations ago.
+\textsc{GLOBETROTTER} \citep{Hellenthal2014} takes a complementary approach,
+inferring both admixture sources and timing from LD patterns; however, it
+operates on a source--target model rather than a full graph topology and does
+not incorporate identity-by-descent (IBD) statistics.
+More recently, IBD-based approaches have exploited the observation that the
+expected mean length of inter-population IBD segments decays as $100/T$~cM,
+providing a direct genomic clock on admixture timing
+\citep{Browning2020,Palamara2012}.
+Despite this complementarity, current practice couples the two estimation
+problems only sequentially: users infer topology with F-statistic tools and
+subsequently run a timing method under the fixed topology, propagating
+topology uncertainty into timing estimates without any feedback loop.
+
+\paragraph{The case for joint inference.}
+Topology misspecification — a common outcome of greedy graph search — biases
+downstream timing estimates, because the IBD likelihood depends on which
+populations are designated as admixed and which as sources.
+Conversely, timing information can resolve topology degeneracies: two competing
+graphs may be equally consistent with $F_2$ statistics yet make different IBD
+predictions, allowing the IBD likelihood to discriminate between them.
+A jointly calibrated framework would propagate uncertainty coherently across
+topology, proportions, and timing, yielding credible intervals rather than
+the point estimates returned by current pipelines.
+
+\paragraph{This work: \hapgraph{}.}
+We introduce \hapgraph{}, a Python package for joint admixture graph inference
+using F-statistics for topology and proportion estimation (Stage I) followed
+by Bayesian IBD-based timing inference (Stage II).
+The two stages are deliberately decoupled: preliminary experiments showed
+that incorporating IBD into the topology search causes systematic edge
+over-detection; IBD is therefore reserved exclusively for timing inference
+after the topology is fixed.
+Applied to coalescent simulations under three scenarios (S1: pure tree,
+$K=0$; S2: one cross-clade event, $K=1$; S3: two independent events, $K=2$),
+\hapgraph{} achieves a false positive rate of 0\% on pure trees and
+recovers all true admixture target populations with 100\% recall.
+Parameter estimation under oracle topology achieves alpha MAE of
+$0.054$--$0.061$ and T MAE of $10.9$--$11.4$ generations; the 95\% credible
+intervals for $T$ achieve 85--93\% empirical coverage meeting the pre-specified
+target, while alpha CIs remain conservative at 55--62\% (see Discussion).
+Applied to the 1000 Genomes Project 2022 high-coverage dataset
+\citep{ByrskaBishop2022}, \hapgraph{} infers $K=8$ admixture events whose
+targets and proportions are consistent with published population history
+across African American, Latino, and South Asian populations
+\citep{Bryc2015,Moreno-Estrada2013,Moorjani2013};
+admixture timing ($T$) was not estimated for the real data application,
+as it requires pre-computation of IBD segments by \hapibd{} and is
+deferred to future work.
+
+\paragraph{Contributions.}
+(i) A two-stage pipeline integrating F-statistics and IBD sharing for joint
+admixture graph topology inference and timing estimation;
+(ii) a topology-independent $F_3$ method-of-moments estimator for admixture
+proportions, robust to neighbor-joining misplacement;
+(iii) a BIC-based greedy search with a scale-adaptive stopping criterion
+achieving 0\% false positive rate on pure trees and 100\% target recall
+across $K \leq 2$ simulation scenarios;
+(iv) an open-source Python implementation with documented validation on
+coalescent simulations and application to the 1kGP 2022 dataset.

@@ -1,0 +1,33 @@
+% tab1_simulation.tex — Simulation benchmark summary
+% Numbers verified against /results/hapgraph/S{1,2,3}_oracle_results.json
+\begin{table}[htbp]
+\centering
+\caption{Simulation benchmark results across three scenarios (20 seeds each).
+Topology metrics (columns 3--5) evaluate the greedy Stage~I search;
+parameter metrics (columns 6--9) evaluate Stage~II under the oracle topology.
+$K$-exact: fraction of seeds where the inferred number of admixture events
+exactly equals $K_{\mathrm{true}}$.
+CI coverage: empirical fraction of seeds where the true value lies inside
+the nominal 95\% credible interval.
+All values are means; $\pm$ gives one standard deviation.
+N/A: no admixture events to estimate in S1 ($K=0$).}
+\label{tab:simulation}
+\small
+\begin{tabular}{lcccccccc}
+\toprule
+ & & \multicolumn{3}{c}{Topology (Stage I)} & \multicolumn{4}{c}{Parameters (Stage II, oracle topology)} \\
+\cmidrule(lr){3-5}\cmidrule(lr){6-9}
+Scenario & $K_{\mathrm{true}}$ & $K$-exact & Recall & Precision
+         & $\alpha$ MAE & $T$ MAE (gen)
+         & $\alpha$ CI cov. & $T$ CI cov. \\
+\midrule
+S1 (6 pops) & 0 & 1.00 & --- & --- & --- & --- & --- & --- \\
+S2 (7 pops) & 1 & 0.45 & 1.00 & 1.00
+            & $0.061 \pm 0.040$ & $11.4 \pm 4.9$
+            & 55\% & 85\% \\
+S3 (10 pops) & 2 & 1.00 & 1.00 & 1.00
+             & $0.054 \pm 0.024$ & $10.9 \pm 4.2$
+             & 62\% & 93\% \\
+\bottomrule
+\end{tabular}
+\end{table}

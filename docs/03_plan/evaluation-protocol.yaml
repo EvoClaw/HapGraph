@@ -1,0 +1,113 @@
+# HapGraph Evaluation Protocol — LOCKED at G2
+# Phase 3 output; DO NOT change metrics after G2 approval
+
+locked: true    # G2 approved by user — metrics frozen
+
+tool_name: HapGraph
+research_type: C
+target_venue: Bioinformatics (Oxford) or Molecular Ecology Resources
+
+## Primary Metrics
+
+correctness:
+  - metric: Robinson-Foulds (RF) distance
+    direction: lower_better
+    reference: TreeMix and AdmixtureBayes on same simulated data
+    
+  - metric: Alpha MAE (admixture proportion mean absolute error)
+    direction: lower_better
+    target: <= 0.03 for alpha in [0.05, 0.5]
+    
+  - metric: T MAE (admixture timing mean absolute error, generations)
+    direction: lower_better
+    target: <= 10 generations for T in [5, 50]
+    scope: Timing valid only for T in [5, 50] generations
+    
+  - metric: 95% CI coverage for alpha and T
+    direction: higher_better
+    target: >= 85% coverage on simulations
+
+performance:
+  - metric: Runtime (wall clock, single CPU)
+    target: < 2 hours for N=26 populations
+    
+  - metric: Scaling curve (runtime vs N)
+    populations: [5, 10, 15, 20, 26]
+    
+scalability:
+  - metric: Memory (RAM) vs N
+  - metric: Runtime vs K (admixture edges): K = 0,1,2,3,4
+
+## Simulation Scenarios (msprime)
+
+scenarios:
+  S1: {populations: 6, K: 0, T: none, replicates: 20, purpose: baseline tree}
+  S2: {populations: 8, K: 1, T: "10-50 gen", replicates: 30, purpose: simple admixture}
+  S3: {populations: 10, K: 2, T: "5-100 gen", replicates: 30, purpose: complex admixture}
+  S4: {populations: 15, K: 3, T: "3-80 gen", replicates: 20, purpose: larger graph}
+  S5: {populations: 26, K: 4, T: "5-150 gen", replicates: 10, purpose: full scale}
+  S6: {populations: 10, K: 2, T: "<5 gen", replicates: 20, purpose: very recent admixture}
+  S7: {populations: 10, K: 2, T_true: "2 pulses", T_model: "1 pulse", replicates: 15, purpose: misspecification}
+
+## Ablation Plan
+
+ablations:
+  F_only_Bayes: {f_stats: true, ibd: false, topology: greedy}
+  IBD_only: {f_stats: false, ibd: true, topology: greedy}
+  F_plus_IBD_full: {f_stats: true, ibd: true, topology: greedy}   # HapGraph
+  TreeMix_baseline: {f_stats: true, ibd: false, topology: greedy_ML}
+  AdmixtureBayes_baseline: {f_stats: true, ibd: false, topology: RJMCMC}
+  ALDER_timing: {method: LD_decay, purpose: timing_comparison}
+
+## Comparison Tools
+
+baselines:
+  - name: TreeMix
+    year: 2012
+    code: official (https://bitbucket.org/nygcresearch/treemix)
+    
+  - name: AdmixtureBayes
+    year: 2023
+    code: official (https://github.com/avaughn271/AdmixtureBayes)
+    
+  - name: ALDER
+    year: 2012
+    code: official (https://hsph.harvard.edu/alkes-price/software/)
+    purpose: timing_baseline_only
+    
+  - name: qpGraph (ADMIXTOOLS2)
+    year: 2022
+    code: official (https://github.com/uqrmaie1/admixtools)
+    note: given correct topology, compare alpha estimates
+
+## Real Data Applications
+
+applications:
+  primary:
+    dataset: 1kGP 2022
+    populations: 26
+    samples: 3202
+    vcf_location: /home/yanlin/1KGothers/1000GP/20220422_3202_phased_SNV_INDEL_SV/
+    
+  secondary:
+    dataset: TBD (HGDP or populations with archaeologically-dated admixture events)
+    purpose: timing_validation_with_external_evidence
+
+## Documentation Requirements
+
+documentation:
+  - README with install, minimal example, citation
+  - Tutorial: VCF to final graph (1kGP subset, 5 pops)
+  - Validation tutorial: simulations with known truth
+  - API reference (auto-generated)
+  - Interpretation guide for alpha and T (including caveats on timing scope)
+  - Example data: 1kGP subset (5 pops, chr22) in repository
+
+## Reproducibility Requirements
+
+reproducibility:
+  - random seed: --seed / random_seed in all MCMC calls
+  - config file: --config config.yaml for full pipeline
+  - dependency versions: documented in environment.yml / pyproject.toml
+  - hap-ibd version: pinned in documentation
+  - scikit-allel version: pinned in pyproject.toml

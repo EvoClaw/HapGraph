@@ -1,0 +1,100 @@
+% related-work.tex — HapGraph Related Work
+% Target: 500+ words, 10+ citations
+% Must POSITION against prior work, not just list it
+
+\subsection*{Admixture Graph Inference}
+
+The problem of inferring admixture graphs from population genetic data has
+a rich history rooted in the development of F-statistics.
+\citet{Reich2009} introduced the $F_3$ and $F_4$ statistics as formal tests
+for tree-inconsistency, providing the first statistical framework for
+detecting admixture in a graph context.
+\citet{Patterson2012} formalised the full suite of F-statistics and their
+bias-corrected estimators, proving that negative $F_3(C;\,A,B)$ is a
+statistically unambiguous signal of admixture when $C$ lies on an internal
+branch between $A$ and $B$; this foundation underlies both \hapgraph{} and
+all subsequent graph-inference tools.
+
+\treemix{} \citep{Pickrell2012} was the first fully automated admixture
+graph inference tool, placing the problem in a maximum-likelihood framework
+and using a greedy search over admixture edge proposals.
+\hapgraph{}'s Stage I topology search is conceptually similar to \treemix{},
+using the same F-statistic covariance structure, but differs in two key
+respects: the stopping criterion is BIC-based (scale-adaptive) rather than
+a fixed residual threshold, and the pipeline subsequently estimates
+admixture timing — a capability entirely absent from \treemix{}.
+
+\textsc{qpGraph} \citep{Haak2015} and its successor \textsc{ADMIXTOOLS2}
+\citep{Maier2023} extended F-statistic graph inference to support user-specified
+topologies with formal $F$-ratio optimisation, enabling precise proportion
+estimation under a fixed graph.
+\textsc{ADMIXTOOLS2} also implements an automated search over graph space
+\citep{Maier2023}.
+These tools do not model admixture timing, and \hapgraph{}'s topology-independent
+$F_3$ method-of-moments estimator is conceptually related to \textsc{qpGraph}'s
+proportion fitting but does not require a correctly specified topology.
+
+\textsc{AdmixtureBayes} \citep{Nielsen2023} represents the current state of
+the art in Bayesian admixture graph inference, using a reversible-jump MCMC
+sampler to jointly explore graph topology and proportion space with full
+posterior uncertainty quantification.
+Its treatment of topology uncertainty is more principled than \hapgraph{}'s
+two-stage approach.
+However, \textsc{AdmixtureBayes} does not model admixture timing, and its
+RJMCMC sampler becomes computationally intractable for large numbers of
+populations, making it unsuitable for datasets with $N \gg 10$ populations.
+\hapgraph{} trades formal joint topology uncertainty for scalability and a
+timing estimation capability that \textsc{AdmixtureBayes} lacks.
+
+\subsection*{Admixture Timing}
+
+\alder{} \citep{Loh2013} estimates admixture timing from the decay of
+weighted linkage disequilibrium (LD) between ancestry-informative markers,
+exploiting the fact that admixture-induced LD decays at a rate of
+$\sim\!1/T$ per generation.
+\alder{} is the standard timing complement to \treemix{}; the two tools
+are typically applied sequentially, with \treemix{} providing the topology
+and \alder{} providing timing.
+\hapgraph{} replaces this two-step workflow with a single integrated analysis
+and uses IBD segment lengths rather than LD decay as the timing signal, which
+is complementary: IBD is more sensitive to recent admixture ($T < 50$
+generations) while LD-based methods can in principle reach deeper events.
+
+\textsc{GLOBETROTTER} \citep{Hellenthal2014} jointly infers admixture sources
+and timing from chromosome painting coancestry curves, making it conceptually
+the closest existing tool to \hapgraph{} in its goal of joint source and timing
+inference.
+The key distinctions are: \textsc{GLOBETROTTER} operates on a source--target
+model rather than a full admixture graph topology, does not produce a graph
+with edge probabilities, and uses LD-derived signals rather than IBD segments.
+\hapgraph{} is therefore complementary: it provides a full graph topology and
+IBD-based timing, while \textsc{GLOBETROTTER} provides richer source
+decomposition and access to deeper time scales.
+
+\subsection*{IBD-Based Demographic Inference}
+
+The relationship between IBD segment lengths and demographic history was
+formalised by \citet{Palamara2012}, who showed that the distribution of IBD
+segment lengths encodes the coalescence rate function, enabling inference of
+effective population size histories.
+\citet{Browning2020} developed \hapibd{}, a scalable algorithm for phased IBD
+detection that forms the pre-processing step in \hapgraph{}'s Stage II.
+The use of mean IBD segment length as a clock for admixture timing, via the
+$\mathbb{E}[\bar{L}] = 100/T$ model, is well-established in the IBD literature
+\citep{Browning2020} and has been applied to date admixture events in diverse
+human populations \citep{Moorjani2013}.
+\hapgraph{} embeds this timing model within a full Bayesian inference
+framework and integrates it with the F-statistic graph model, rather than
+applying it as a standalone post-hoc analysis.
+
+\subsection*{1000 Genomes Project and Human Population History}
+
+\hapgraph{} was validated on the 2022 high-coverage 1kGP release
+\citep{ByrskaBishop2022}, which provides phased SNP calls for 3202 individuals
+across 26 populations and represents the highest-coverage large-scale human
+population genomics reference to date.
+The admixture events detected by \hapgraph{} are consistent with published
+reconstructions of African American and Afro-Caribbean history
+\citep{Bryc2015}, Latino population structure \citep{Moreno-Estrada2013},
+and South Asian admixture chronology \citep{Moorjani2013}, providing
+independent biological validation for the inferred graph.

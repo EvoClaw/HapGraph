@@ -1,0 +1,95 @@
+% discussion.tex — HapGraph Discussion
+% Target: 400+ words, 3+ citations
+
+\hapgraph{} demonstrates that F-statistics and IBD sharing statistics can be
+combined in a single framework to address a long-standing gap in population
+genetic inference: estimating not only the topology and proportions of an
+admixture graph but also the timing of each admixture event.
+Here we discuss the design trade-offs that shaped the current implementation,
+the limitations revealed by our simulation experiments, and the directions
+that would most improve the tool.
+
+\paragraph{Two-stage decoupling: a necessary trade-off.}
+The decision to decouple topology inference (Stage I, F-statistics only) from
+timing inference (Stage II, IBD) was motivated by preliminary experiments in
+which including IBD in the greedy search caused systematic edge over-detection,
+consistent with the known confounding between IBD signals and topology ambiguity
+\citep{Loh2013}.
+This decoupling prevents coherent joint uncertainty propagation — the
+topology is treated as fixed when estimating $T$, rather than as a random
+variable — and is therefore a limitation of the current design relative to
+a fully Bayesian reversible-jump MCMC framework such as
+\textsc{AdmixtureBayes} \citep{Nielsen2023}.
+However, full RJMCMC over graph space is computationally prohibitive for
+$N \gtrsim 10$ populations \citep{Nielsen2023}, whereas \hapgraph{} runs
+in seconds to minutes per simulation replicate.
+The two-stage approach thus represents a practical compromise between
+statistical completeness and scalability, a design philosophy shared by the
+wider family of greedy-then-refine methods in phylogenetics.
+
+\paragraph{Edge over-detection in simple scenarios.}
+In S2 ($K=1$), the greedy search inferred the correct number of admixture
+edges in 45\% of seeds; in the remaining 55\%, a spurious second edge was
+added to the same target population.
+Notably, the precision on admixture \emph{target populations} was 100\%:
+no non-admixed population was falsely labelled as admixed.
+The over-detection reflects the BIC penalty being insufficiently
+restrictive for seven populations, where the ratio of free parameters to
+F-statistics is high enough that a spurious secondary source can improve
+the fit beyond the penalty.
+In S3 ($K=2$, ten populations), the richer F-statistic structure provides
+stronger BIC discrimination, and the exact topology was recovered in 100\%
+of seeds.
+We recommend users treat the inferred $K$ as an upper bound in data-sparse
+settings, and use $F_4$ consistency tests \citep{Patterson2012} to
+independently validate detected events.
+
+\paragraph{Alpha uncertainty quantification.}
+The 95\% credible interval for $\alpha$ achieved only 55--62\% empirical
+coverage across scenarios, substantially below the nominal 95\%.
+The F3 method-of-moments delta-method approximation is known to
+underestimate uncertainty when $\alpha \approx 0.5$ (where the quadratic
+estimator is least sensitive to $F_3$ perturbations) and when the
+source populations are imperfectly represented by the NJ tree
+(introducing model misspecification not captured by the jackknife
+standard error).
+The 3\% model-uncertainty floor, while improving coverage from near-zero
+to 55--62\%, is not sufficient to reach the 85\% target.
+More principled alpha uncertainty quantification — for instance, by
+bootstrapping the $F_3$ and $F_2$ statistics jointly across blocks, or by
+propagating NJ tree uncertainty via a parametric bootstrap — is a priority
+for future development.
+
+\paragraph{Timing estimation: calibration and scope.}
+By contrast, the 95\% credible interval for $T$ achieved 85--93\% empirical
+coverage, meeting or slightly exceeding the pre-specified 85\% target.
+This reflects the better-posed nature of the timing problem given fixed
+$\alpha$: the IBD decay model $\mathbb{E}[\bar{L}] = 100/T$ is well-specified
+under the single-pulse assumption, and the heteroscedastic noise model
+$\sigma_i = \max(0.5 L_i, 3.0)$ adequately captures IBD count variance.
+The 2~cM segment detection threshold of \hapibd{} \citep{Browning2020}
+restricts reliable inference to $T \in [5,\, 50]$ generations; admixture
+events older than 50 generations produce segments shorter than 2~cM that
+\hapibd{} cannot reliably detect, while very recent events ($T < 5$) produce
+segments too long to distinguish from background relatedness.
+Users analysing deep historical admixture ($T > 50$) should instead
+use LD-decay tools such as \alder{} \citep{Loh2013} or
+\textsc{GLOBETROTTER} \citep{Hellenthal2014}.
+
+\paragraph{Scope limitations and future work.}
+Several limitations of the current study should be noted.
+Systematic simulation validation was conducted only for $K \leq 2$; the
+accuracy of topology inference and parameter estimation for $K \geq 3$ was
+demonstrated qualitatively on the 1kGP real data but not benchmarked against
+known ground truth.
+Admixture timing was not estimated for the 1kGP application, as it requires
+phased IBD pre-computation that is available in principle but was deferred
+from the current study.
+No direct quantitative comparison to \treemix{} or other baseline tools was
+performed; because \treemix{} does not estimate $T$, a comparison of alpha
+and topology accuracy would illuminate the cost of the joint framework
+relative to the F-statistics-only baseline, and is a priority for future work.
+Finally, the current model assumes a single admixture pulse per target
+population; extending the IBD likelihood to accommodate multiple pulses
+or continuous gene flow would address a known limitation of pulse models
+in populations with prolonged admixture histories \citep{Loh2013}.

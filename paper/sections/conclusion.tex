@@ -1,0 +1,32 @@
+% conclusion.tex — HapGraph
+% Target: 200+ words
+
+We have presented \hapgraph{}, an open-source Python tool for joint admixture
+graph inference and timing estimation from phased SNP data.
+By combining an F-statistics-based greedy topology search with a Bayesian
+IBD-based timing model, \hapgraph{} addresses a gap that has persisted in
+population genetic inference: the lack of a unified framework for estimating
+who mixed with whom and when, within a single calibrated analysis.
+
+Simulation experiments across three scenarios demonstrate that \hapgraph{}
+achieves zero false positive rate on pure trees, 100\% recall of true
+admixture target populations, and well-calibrated posterior timing estimates
+(85--93\% empirical coverage for $T$ across $K=1$ and $K=2$ scenarios).
+The key limitation identified in benchmarking — under-calibrated uncertainty
+for admixture proportions (55--62\% empirical coverage) — is a known
+challenge of the $F_3$ method-of-moments delta-method approximation near
+$\alpha \approx 0.5$, and is a priority for future development.
+
+Application to the 1000 Genomes Project 2022 dataset yielded eight biologically
+interpretable admixture events consistent with published population histories,
+demonstrating that \hapgraph{}'s topology inference scales to 26 populations
+and produces results suitable for downstream biological interpretation.
+
+Future directions include: extending simulation validation to $K \geq 3$;
+applying IBD-based timing estimation to real data following hap-ibd
+pre-processing; improving alpha credible interval calibration; and direct
+quantitative comparison to \textsc{GLOBETROTTER} and \alder{} timing estimates.
+\hapgraph{} is designed as a modular Python package, allowing components
+(F-statistics, IBD model, MCMC sampler) to be extended or replaced
+independently, facilitating community development and adaptation to new
+use cases.

@@ -1,0 +1,197 @@
+% method.tex — HapGraph Methods section (v2 — post Phase B review)
+% Fixes: IBD model (100/T not exp decay), Z-threshold (-2.0), transitions,
+%        design motivation, prior spec, runtime details
+
+\subsection*{Overview}
+
+\hapgraph{} takes as input phased SNP data for $N$ populations and produces
+a parsimony-optimal admixture graph together with posterior distributions for
+the admixture proportion $\alpha$ and the admixture timing $T$ for each
+inferred admixture event (Figure~\ref{fig:pipeline}).
+The pipeline is deliberately structured as two decoupled stages.
+\textbf{Stage I} uses F-statistics exclusively to infer the graph topology
+and estimate admixture proportions; \textbf{Stage II} holds the inferred
+topology fixed and uses inter-population identity-by-descent (IBD) sharing
+to estimate $T$ under a Bayesian NUTS sampler.
+This decoupling is motivated by preliminary experiments in which
+incorporating IBD directly into the greedy likelihood caused systematic
+edge over-detection, consistent with the known tendency of IBD signals to
+be confounded with topology ambiguity when both topology and timing are
+simultaneously free \citep{Loh2013}.
+Reserving IBD exclusively for timing inference, after the topology has been
+fixed, avoids this confounder.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig4_pipeline}
+  \caption{%
+    \textbf{Overview of the \hapgraph{} two-stage pipeline.}
+    \textbf{Stage~I} (green) accepts phased VCF input and computes
+    bias-corrected $F_2$/$F_3$ statistics with block-jackknife standard
+    errors; a BIC-adaptive greedy search over the NJ tree backbone infers
+    the admixture graph topology; admixture proportions $\hat{\alpha}$
+    are estimated by the topology-independent $F_3$ method-of-moments
+    estimator.
+    \textbf{Stage~II} (orange) receives the fixed topology and
+    $\hat{\alpha}$ from Stage~I; it ingests pre-computed IBD segment
+    lengths from \hapibd{} and estimates timing $T$ via a NUTS-MCMC
+    sampler over the $\mathbb{E}[\bar{L}] = 100/T$ likelihood.
+    The two stages are decoupled to prevent IBD signals from confounding
+    topology inference (see text).
+  }
+  \label{fig:pipeline}
+\end{figure}
+
+\subsection*{F-Statistics Computation}
+
+All pairwise F-statistics are computed following the definitions and
+bias-correction formulae of \citet{Patterson2012}.
+For populations $A$, $B$, $C$ genotyped at $S$ biallelic SNPs, we define
+\begin{align}
+  F_2(A,B) &= \frac{1}{S}\sum_{j=1}^{S}(p_{Aj} - p_{Bj})^2, \label{eq:f2}\\
+  F_3(C;\,A,B) &= \frac{1}{S}\sum_{j=1}^{S}
+    \left[(p_{Cj} - p_{Aj})(p_{Cj} - p_{Bj})
+          - \frac{h_{Cj}}{2(n_C - 1)}\right], \label{eq:f3}
+\end{align}
+where $p_{Xj}$ is the derived allele frequency at SNP $j$ in population $X$,
+$h_{Cj}$ is the per-SNP heterozygosity in population $C$, and $n_C$ is the
+diploid sample size.
+The second term in equation~(\ref{eq:f3}) is the finite-sample bias correction
+for heterozygosity introduced by \citet{Patterson2012}, which ensures
+$F_3(C;\,A,B) < 0$ only when $C$ is genuinely admixed between lineages
+separating $A$ from $B$.
+Standard errors are estimated by a block-jackknife procedure with 50
+non-overlapping contiguous genomic blocks, following the convention of
+\citet{Reich2009}.
+Only biallelic SNPs with minor allele frequency $\geq 0.01$ are retained;
+indels and multi-allelic sites are excluded.
+
+\subsection*{Stage I: Greedy Topology Search}
+
+An initial unrooted tree topology is constructed by applying neighbor-joining
+\citep{SaitouNei1987} to the matrix of pairwise $F_2$ distances.
+The greedy search then adds admixture edges one at a time.
+At each iteration, populations $C$ whose $F_3(C;\,A,B)$ Z-score falls below
+$-2.0$ for any source pair $(A,B)$ are nominated as admixture candidates —
+a threshold calibrated to reduce false nominations while retaining sensitivity
+for weak admixture signals.
+For each candidate, we propose placing an admixture edge from a source node to
+$C$ and score it by the change in a BIC-adjusted log-likelihood:
+\begin{equation}
+  \Delta\mathrm{BIC} = \Delta \log \mathcal{L}
+                        - \bigl(5.0 + 0.5\log(\max(S,2))\bigr),
+  \label{eq:bic}
+\end{equation}
+where $S$ is the number of F-statistics contributing to the fit.
+The scale-adaptive penalty in equation~(\ref{eq:bic}) counteracts the
+tendency of greedy graph searches to accumulate spurious edges as the
+observation count grows \citep{Pickrell2012}.
+An edge is added if and only if $\Delta\mathrm{BIC} > 0$.
+To avoid identifiability problems, each population may be the target of at
+most one admixture edge; the search terminates when no remaining proposal
+achieves a positive BIC improvement.
+
+\subsection*{Admixture Proportion Estimation via $F_3$ Method-of-Moments}
+
+For an admixed population $C$ whose ancestry is a linear combination of
+sources $A$ (proportion $\alpha$) and $B$ (proportion $1-\alpha$), the
+expected $F_3$ statistic satisfies \citep{Patterson2012}
+\begin{equation}
+  \mathbb{E}\!\left[F_3(C;\,A,B)\right] = -\alpha(1-\alpha)\,F_2(A,B).
+  \label{eq:f3_expectation}
+\end{equation}
+Equation~(\ref{eq:f3_expectation}) yields a quadratic in $\alpha$ whose
+smaller root is
+\begin{equation}
+  \hat{\alpha} = \frac{1 - \sqrt{1 - 4x}}{2},
+  \qquad x = \frac{-F_3(C;\,A,B)}{F_2(A,B)},
+  \label{eq:f3mom}
+\end{equation}
+which is defined for $x \in (0, 0.25]$, i.e.\ whenever $F_3 < 0$.
+This estimator is entirely topology-independent: it requires only the
+F-statistics involving the target and its two source populations, making it
+robust to NJ-tree misplacement errors that would otherwise bias a
+topology-dependent estimator.
+Standard errors are propagated by the delta method from the jackknife
+standard errors of both $F_3$ and $F_2$; a model-uncertainty floor of 0.03
+is added in quadrature to account for residual approximation error (e.g.\
+multi-source ancestry, background relatedness).
+Among all source pairs $(A,B)$ for a given target $C$, the pair yielding the
+most negative $F_3$ Z-score is selected, as this corresponds to the strongest
+admixture signal.
+
+\subsection*{Stage II: IBD-Based Timing Estimation}
+
+Under a single-pulse admixture model, IBD segments shared between the admixed
+population $C$ and its source populations are broken down by recombination
+at rate $r = 0.01$ per generation per cM.
+For segments longer than a minimum length $\ell_{\min}$, the expected mean
+segment length decreases inversely with time:
+\begin{equation}
+  \mathbb{E}[\bar{L}] = \frac{100}{T} \quad\text{(cM)},
+  \label{eq:ibd_timing}
+\end{equation}
+where $T$ is the number of generations since the admixture event
+\citep{Browning2020,Palamara2012}.
+IBD segments are detected using \hapibd{} \citep{Browning2020} at a minimum
+length of $\ell_{\min} = 2$~cM, which constrains reliable inference to
+$T \in [5,\, 50]$ generations — the range over which segments of this length
+are detectable and whose expected length $\bar{L}$ is well-estimated.
+
+Given fixed $\hat{\alpha}$ from Stage I, the log-likelihood of the observed
+mean IBD lengths $\{L_i\}$ over source-clade population pairs is
+\begin{equation}
+  \log p(\mathbf{L} \mid T) = \sum_i \log \mathcal{N}\!\left(
+    L_i;\; \frac{100}{T},\; \sigma_i^2
+  \right),
+  \label{eq:lik}
+\end{equation}
+where $\sigma_i = \max(0.5 \cdot L_i,\; 3.0)$ is a heteroscedastic noise
+term that captures stochastic variance in segment counts and model
+misspecification at the 2~cM threshold.
+Posterior inference over $T$ uses the No-U-Turn Sampler (NUTS)
+\citep{Hoffman2014} as implemented in PyMC \citep{AbrilPimentel2023}.
+The timing parameter is reparameterised as $T = T_{\mathrm{raw}} + 5$,
+where $T_{\mathrm{raw}} \sim \mathrm{HalfNormal}(\sigma = 20)$; this places
+prior mass on $T \in (5, \sim\!60)$ generations while allowing the sampler to
+explore larger values, and ensures $T > 5$ consistent with the 2~cM detection
+threshold.
+We run four independent chains with 1000 adaptation steps and 1000 posterior
+draws each; convergence is assessed by $\hat{R} < 1.05$ and effective sample
+size $\mathrm{ESS} > 200$.
+
+\subsection*{Implementation}
+
+\hapgraph{} is implemented as a pure Python package.
+Core runtime dependencies are: \texttt{scikit-allel}~$\geq 1.3$
+\citep{Miles2021} for allele frequency computation from VCF files;
+\texttt{PyMC}~$\geq 5.0$ \citep{AbrilPimentel2023} for gradient-based
+Bayesian sampling; and \texttt{networkx} for graph representation and
+manipulation.
+IBD segment detection is handled externally by \hapibd{} \citep{Browning2020}
+and ingested as a precomputed tabular file; this design allows users to
+substitute alternative IBD callers without modifying the inference code.
+On a single CPU core (2.4~GHz Intel Xeon), the complete pipeline from phased
+VCF to an annotated admixture graph with posterior timing estimates completes
+in under 2~hours for 26 populations and 3202 samples across approximately
+500K filtered SNPs.
+
+\subsection*{Simulation Benchmarking Framework}
+
+All validation simulations were generated with \texttt{msprime}~$\geq 1.2$
+\citep{Kelleher2016} under specified coalescent models.
+We designed three scenarios of increasing complexity.
+\textbf{S1} (six populations, $K=0$ admixture events) tests the specificity
+of the greedy search; because the true graph is a pure tree, any detected
+admixture edge is a false positive.
+\textbf{S2} (seven populations, $K=1$; $\alpha \sim \mathrm{Uniform}(0.1, 0.5)$,
+$T \sim \mathrm{Uniform}(10, 50)$ generations) tests detection and parameter
+recovery for a single cross-clade admixture event.
+\textbf{S3} (ten populations, $K=2$; two independent cross-clade admixture
+events with distinct source pairs) tests simultaneous recovery of multiple
+non-overlapping admixture events, a necessary capability for application to
+real multi-population data.
+Each scenario was replicated across 20 independent random seeds.
+All simulations used a sequence length of 50~Mbp, recombination rate
+$10^{-8}$ per base pair per generation, mutation rate $10^{-8}$, and
+effective population size $N_e = 10{,}000$.

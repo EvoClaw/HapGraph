@@ -1,0 +1,174 @@
+{
+  "n_pops": 26,
+  "populations": [
+    "ACB",
+    "ASW",
+    "BEB",
+    "CDX",
+    "CEU",
+    "CHB",
+    "CHS",
+    "CLM",
+    "ESN",
+    "FIN",
+    "GBR",
+    "GIH",
+    "GWD",
+    "IBS",
+    "ITU",
+    "JPT",
+    "KHV",
+    "LWK",
+    "MSL",
+    "MXL",
+    "PEL",
+    "PJL",
+    "PUR",
+    "STU",
+    "TSI",
+    "YRI"
+  ],
+  "nj_newick": "((FIN:0.001659,((PUR:0.000000,(ASW:0.000000,(ACB:0.000000,(LWK:0.001104,(GWD:0.001326,(MSL:0.001547,(ESN:0.001489,YRI:0.001108):0.000477):0.000465):0.001325):0.002060):0.004606):0.014805):0.002015,(CLM:0.000818,(((JPT:0.001580,((CDX:0.001294,KHV:0.000608):0.000453,(CHB:0.000750,CHS:0.001015):0.000312):0.000462):0.008731,(MXL:0.000000,PEL:0.006521):0.001803):0.002999,(PJL:0.000600,((BEB:0.001040,(ITU:0.000972,STU:0.000963):0.000233):0.000463,GIH:0.000926):0.000574):0.001164):0.001439):0.000310):0.002474):0.000251,(IBS:0.000978,TSI:0.001071):0.000220,(CEU:0.000927,GBR:0.000828):0.000133);",
+  "K": 8,
+  "admixture_edges": [
+    {
+      "src": "internal_12",
+      "tgt": "ASW",
+      "alpha_greedy": 0.27499999999999997
+    },
+    {
+      "src": "GBR",
+      "tgt": "PUR",
+      "alpha_greedy": 0.38749999999999996
+    },
+    {
+      "src": "internal_6",
+      "tgt": "ACB",
+      "alpha_greedy": 0.05
+    },
+    {
+      "src": "internal_19",
+      "tgt": "MXL",
+      "alpha_greedy": 0.6125
+    },
+    {
+      "src": "internal_9",
+      "tgt": "LWK",
+      "alpha_greedy": 0.05
+    },
+    {
+      "src": "internal_20",
+      "tgt": "CLM",
+      "alpha_greedy": 0.27499999999999997
+    },
+    {
+      "src": "internal_9",
+      "tgt": "BEB",
+      "alpha_greedy": 0.16249999999999998
+    },
+    {
+      "src": "FIN",
+      "tgt": "PJL",
+      "alpha_greedy": 0.16249999999999998
+    }
+  ],
+  "admixture_events": [
+    {
+      "edge_idx": 0,
+      "src_greedy": "internal_12",
+      "tgt": "ASW",
+      "alpha_greedy": 0.27499999999999997,
+      "src_a_f3": "ESN",
+      "src_b_f3": "FIN",
+      "alpha_mom": 0.2126690456818503,
+      "alpha_ci_lo": 0.1538690456818503,
+      "alpha_ci_hi": 0.2714690456818503,
+      "f3_z": -36.58850988766617
+    },
+    {
+      "edge_idx": 1,
+      "src_greedy": "GBR",
+      "tgt": "PUR",
+      "alpha_greedy": 0.38749999999999996,
+      "src_a_f3": "ESN",
+      "src_b_f3": "GBR",
+      "alpha_mom": 0.1282611553428713,
+      "alpha_ci_lo": 0.06946115534287131,
+      "alpha_ci_hi": 0.1870611553428713,
+      "f3_z": -27.039873343339398
+    },
+    {
+      "edge_idx": 2,
+      "src_greedy": "internal_6",
+      "tgt": "ACB",
+      "alpha_greedy": 0.05,
+      "src_a_f3": "ESN",
+      "src_b_f3": "FIN",
+      "alpha_mom": 0.11219261936329927,
+      "alpha_ci_lo": 0.053392619363299275,
+      "alpha_ci_hi": 0.17099261936329926,
+      "f3_z": -22.535011001690684
+    },
+    {
+      "edge_idx": 3,
+      "src_greedy": "internal_19",
+      "tgt": "MXL",
+      "alpha_greedy": 0.6125,
+      "src_a_f3": "PEL",
+      "src_b_f3": "TSI",
+      "alpha_mom": 0.22274802743701982,
+      "alpha_ci_lo": 0.16394802743701983,
+      "alpha_ci_hi": 0.28154802743701984,
+      "f3_z": -24.165848921047925
+    },
+    {
+      "edge_idx": 4,
+      "src_greedy": "internal_9",
+      "tgt": "LWK",
+      "alpha_greedy": 0.05,
+      "src_a_f3": "ESN",
+      "src_b_f3": "TSI",
+      "alpha_mom": 0.02358896694831414,
+      "alpha_ci_lo": 0.0,
+      "alpha_ci_hi": 0.08238896694831413,
+      "f3_z": -7.196609479993081
+    },
+    {
+      "edge_idx": 5,
+      "src_greedy": "internal_20",
+      "tgt": "CLM",
+      "alpha_greedy": 0.27499999999999997,
+      "src_a_f3": "PEL",
+      "src_b_f3": "TSI",
+      "alpha_mom": 0.22010079853648568,
+      "alpha_ci_lo": 0.16130079853648568,
+      "alpha_ci_hi": 0.2789007985364857,
+      "f3_z": -25.80802237633093
+    },
+    {
+      "edge_idx": 6,
+      "src_greedy": "internal_9",
+      "tgt": "BEB",
+      "alpha_greedy": 0.16249999999999998,
+      "src_a_f3": "CHB",
+      "src_b_f3": "GIH",
+      "alpha_mom": 0.07610930861021381,
+      "alpha_ci_lo": 0.017309308610213812,
+      "alpha_ci_hi": 0.1349093086102138,
+      "f3_z": -11.128563499797586
+    },
+    {
+      "edge_idx": 7,
+      "src_greedy": "FIN",
+      "tgt": "PJL",
+      "alpha_greedy": 0.16249999999999998,
+      "src_a_f3": "FIN",
+      "src_b_f3": "STU",
+      "alpha_mom": 0.08630356176980525,
+      "alpha_ci_lo": 0.02750356176980525,
+      "alpha_ci_hi": 0.14510356176980524,
+      "f3_z": -11.929490670220154
+    }
+  ],
+  "runtime_s": 351.14738512039185
+}

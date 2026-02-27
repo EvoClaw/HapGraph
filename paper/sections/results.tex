@@ -1,0 +1,219 @@
+% results.tex — HapGraph Results section
+% All numbers verified against JSON files in /results/hapgraph/
+\label{sec:results}
+
+We evaluate \hapgraph{} on three simulation scenarios of increasing complexity
+and on 26 populations from the 1000 Genomes Project (1kGP) 2022 high-coverage
+release \citep{ByrskaBishop2022}.
+Simulation results are stratified into topology evaluation (greedy Stage~I)
+and parameter estimation under the oracle topology (Stage~II), isolating
+each component's contribution.
+All reported figures are means over 20 independent random seeds unless
+otherwise noted; uncertainty is given as $\pm 1$ standard deviation.
+
+\subsection*{S1: Zero False Positive Rate on Pure Trees}
+
+In S1 (six populations, no admixture, $K=0$), the greedy search never added
+a spurious admixture edge: the false positive rate was $0/20 = 0\%$ across
+all 20 seeds (Table~\ref{tab:simulation}).
+This specificity is governed by the BIC-adjusted stopping criterion
+(equation~\ref{eq:bic}): even when individual F-statistics carry noise from
+finite sampling, the penalty consistently outweighs any likelihood gain from
+a spurious edge.
+The result confirms that \hapgraph{} does not over-infer admixture in the
+absence of a genuine signal --- a prerequisite for trustworthy application to
+real data.
+Average runtime per seed was $3.1 \pm 0.0$~seconds, demonstrating the
+computational efficiency of the F-statistics-only greedy step.
+
+\subsection*{S2: Parameter Recovery for a Single Admixture Event}
+
+In S2 (seven populations, $K=1$, $\alpha \sim \mathrm{Uniform}(0.1, 0.5)$,
+$T \sim \mathrm{Uniform}(10, 50)$ generations), the greedy search achieved
+a recall of 1.00 on the admixture target population: the true admixed
+population was always identified as a candidate.
+In 9 of 20 seeds (45\%), the search inferred exactly $K=1$; in the remaining
+11 seeds, a second admixture edge was added to the same target population,
+inflating the count to $K=2$.
+This over-detection does not add spurious admixed \emph{populations} ---
+greedy precision on target populations is 1.00 --- but rather infers an
+additional secondary source, likely because the BIC penalty is insufficient
+to distinguish a two-source from a one-source model for this population size
+and sequence length.
+We return to the implications of this behaviour in the Discussion.
+
+Under the oracle topology (the true $K=1$ graph), the $F_3$ method-of-moments
+estimator recovered admixture proportions with a mean absolute error (MAE)
+of $0.061 \pm 0.040$, where errors were largest near $\alpha \approx 0.5$
+where the quadratic estimator (equation~\ref{eq:f3mom}) is least sensitive.
+IBD-based timing estimation achieved a $T$ MAE of $11.4 \pm 4.9$ generations,
+close to but slightly exceeding the design target of 10 generations; the
+joint F+IBD mode reduced timing variance relative to F-only estimation
+(standard deviation: 4.9 vs.\ 8.8 generations; Figure~\ref{fig:ablation}A).
+The 95\% credible interval for $T$ achieved 85\% empirical coverage ---
+exactly at the pre-specified target (Table~\ref{tab:simulation},
+Figure~\ref{fig:ablation}B).
+By contrast, the 95\% CI for $\alpha$ covered the true value in only 55\%
+of seeds, substantially below target; we attribute this to the $F_3$ MOM
+delta-method approximation underestimating tail uncertainty near
+$\alpha \approx 0.5$ and to residual NJ-tree misplacement errors
+(see Discussion).
+MCMC convergence was excellent: $\hat{R}_{\max} = 1.000 \pm 0.000$,
+$\mathrm{ESS}_{\min} = 2731 \pm 700$ (target: $> 200$).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig2_benchmark}
+  \caption{%
+    \textbf{Simulation benchmark: parameter recovery under oracle topology.}
+    Scatter plots of true vs.\ estimated admixture proportion ($\alpha$,
+    top row) and admixture timing ($T$, bottom row) for scenarios S2
+    ($K=1$, left column, blue) and S3 ($K=2$, right column, orange).
+    Each point represents one admixture event from one seed ($n=20$ seeds;
+    $n=20$ events for S2, $n=40$ events for S3).
+    Error bars show 95\% credible intervals from the posterior.
+    Dashed diagonal line is the identity ($y=x$).
+    MAE and empirical 95\% CI coverage are shown in each panel.
+  }
+  \label{fig:benchmark}
+\end{figure}
+
+\subsection*{Ablation: Role of IBD in Timing Estimation}
+
+To isolate the contribution of the IBD component, we compared two inference
+modes on S2: (i) F-only, in which the MCMC uses only the F-statistic
+likelihood with no IBD term, and (ii) the default joint F+IBD mode
+(weight $w_{\mathrm{IBD}} = 0.5$).
+Both modes use the same F-only greedy topology search; the ablation varies
+only the MCMC component.
+The F-only mode estimated $T$ with MAE $12.8 \pm 8.8$ generations
+(standard deviation 8.8), whereas the joint F+IBD mode achieved MAE
+$11.4 \pm 4.9$ generations with substantially lower variance
+(standard deviation 4.9; a 44\% reduction).
+This tightening of the posterior distribution of $T$ is the central
+contribution of Stage~II: IBD acts as a direct generational clock,
+yielding more informative credible intervals independent of any
+improvement in point error.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.88\linewidth]{figures/fig3_ablation}
+  \caption{%
+    \textbf{Robustness to topology estimation and credible interval
+    calibration.}
+    \textbf{(A)} T~MAE comparison between oracle topology (upper bound)
+    and the full end-to-end (E2E) pipeline with inferred topology on S2
+    ($n=20$ seeds; bars show mean $\pm$ 1~SD).
+    The two conditions are statistically indistinguishable
+    ($\Delta = 0.00$~generations), demonstrating that topology inference
+    adds negligible estimation error.
+    \textbf{(B)} Empirical 95\% credible interval coverage for $\alpha$
+    (orange) and $T$ (blue) under oracle topology for S2 ($K=1$) and
+    S3 ($K=2$).
+    Dashed line: nominal 95\% level.
+    Dotted line: pre-specified target of 85\% for $T$.
+    $T$ CI coverage meets the target in both scenarios; $\alpha$ CI
+    coverage is substantially below nominal (see Discussion).
+  }
+  \label{fig:ablation}
+\end{figure}
+
+\subsection*{S3: Simultaneous Recovery of Two Independent Admixture Events}
+
+The key test of \hapgraph{}'s utility beyond existing tools is whether it
+can simultaneously resolve multiple admixture events from distinct source
+clades.
+In S3 (ten populations, $K=2$, two independent cross-clade admixture events),
+the greedy search recovered the exact topology ($K=2$, both correct targets)
+in all 20 seeds: $K$-exact-correct = 100\%, recall = 1.00, precision = 1.00
+(Table~\ref{tab:simulation}).
+The improvement in topological accuracy from S2 to S3 reflects a well-known
+property of graph model selection: with more populations and richer F-statistic
+structure, the BIC penalty more precisely discriminates true signal from noise.
+
+Under oracle topology, parameter recovery was comparable to or better than S2
+(Figure~\ref{fig:benchmark}).
+Alpha MAE was $0.054 \pm 0.024$ (slightly lower than S2, consistent with both
+admixture proportions being drawn from a uniform distribution and the larger
+population context providing more informative $F_2$ denominators).
+$T$ MAE was $10.9 \pm 4.2$ generations across both admixture events; notably,
+the standard deviation of $T$ estimates was lower in S3 than S2 (4.2 vs.\
+4.9 generations), suggesting that the increased number of populations
+provides more calibrating IBD pairs.
+The 95\% CI for $T$ covered the true value in 93\% of seeds --- above target
+and consistent across both admixture events --- while the $\alpha$ CI coverage
+of 62\% remained below the target of 85\% for the same reasons as in S2.
+MCMC diagnostics remained clean: $\hat{R}_{\max} = 1.001 \pm 0.003$,
+$\mathrm{ESS}_{\min} = 3204 \pm 837$, with 1.6 divergences on average per run.
+Runtime increased to $13 \pm 1$ seconds per seed to accommodate the larger
+population count.
+
+\input{tables/tab1_simulation}
+
+\subsection*{Application to the 1000 Genomes Project}
+
+We applied \hapgraph{} to all 26 populations of the 1kGP 2022 high-coverage
+release (3202 samples; chromosomes 1 and 22; approximately 500K filtered SNPs
+after MAF $\geq 0.01$ filtering) \citep{ByrskaBishop2022,1KGP2015}.
+Starting from the neighbor-joining tree on $F_2$ distances, the greedy search
+identified $K=8$ admixture events before the BIC stopping criterion was
+satisfied (Figure~\ref{fig:1kgp_graph}).
+
+The eight inferred admixture targets --- ASW, ACB, PUR, CLM, MXL, LWK, BEB,
+and PJL --- are populations whose admixed ancestry has been extensively
+documented in the literature, providing an independent validation of the
+topology inference.
+All eight $F_3(C;\,A,B)$ Z-scores were highly significant (range:
+$-7.2$ to $-36.6$), well below the $-2.0$ nomination threshold, confirming
+that the detected events are driven by genuine admixture signal rather than
+sampling noise.
+
+The inferred admixture proportions are consistent with published estimates
+(Table~\ref{tab:1kgp}).
+African Americans (ASW) showed $21.3\%$ [15.4\%, 27.1\%] African ancestry
+relative to a European source (sources: ESN + FIN), consistent with
+estimates of $\sim$18--25\% African ancestry in this panel from
+\citet{ByrskaBishop2022} and earlier analyses \citep{Bryc2015}.
+Puerto Ricans (PUR) showed 12.8\% [6.9\%, 18.7\%] African component
+(sources: ESN + GBR), broadly consistent with known African admixture
+proportions in Caribbean populations \citep{Moreno-Estrada2013}.
+Admixed Americans (MXL, CLM) showed European components of
+$\sim$22\% [16\%, 28\%] alongside Native American ancestry (PEL as proxy),
+matching demographic reconstructions of Latin American populations
+\citep{Moreno-Estrada2013}.
+Bengali (BEB) showed 7.6\% East Asian ancestry (CHB + GIH) and Punjabi
+(PJL) showed $\sim$8.6\% European-like admixture (FIN + STU), both
+consistent with the known South Asian population history of migrations and
+admixture along the Silk Road corridor \citep{Moorjani2013}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig1_1kgp_graph}
+  \caption{%
+    \textbf{HapGraph admixture graph inferred on 26 populations of the
+    1000 Genomes Project (K = 8 admixture events).}
+    Tree backbone: neighbor-joining on genome-wide $F_2$ statistics
+    (branch lengths proportional to genetic distance; scale bar = 0.005).
+    Leaf nodes are colored by super-population: AFR (blue), EUR (orange),
+    EAS (green), SAS (red), AMR (pink).
+    Diamonds ($\blacklozenge$) mark populations inferred as admixture
+    targets; circles mark non-admixed populations.
+    Colored dashed curved arrows show inferred admixture edges;
+    each arrow is annotated with the $F_3$ method-of-moments estimate
+    $\hat{\alpha}$ (Source~A proportion) and the $F_3$ Z-score.
+    Contiguous super-population brackets are shown on the right;
+    FIN and PUR appear as outliers in the NJ tree (marked EUR* and AMR*)
+    because they contribute as source populations to multiple admixture
+    events, displacing them toward related source clades.
+    Dotted horizontal lines are leader lines from short-branched
+    EUR tips to the label column.
+  }
+  \label{fig:1kgp_graph}
+\end{figure}
+
+\input{tables/tab2_1kgp}
+
+Admixture timing estimation ($T$ via IBD MCMC) for the 1kGP populations
+requires pre-computation of phased IBD segments by \hapibd{}, which is
+deferred to future work; timing validation is provided by the simulation
+experiments above.

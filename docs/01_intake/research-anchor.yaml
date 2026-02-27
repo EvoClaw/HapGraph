@@ -1,0 +1,108 @@
+# research-anchor.yaml — Phase 0 output
+# Confirm all fields before Phase 1 begins.
+
+confirmed_by_user: true
+project_intent: Engineering   # Primary: build deployable tool; Secondary: quality/uncertainty
+venue_target: Bioinformatics (Oxford) or Molecular Ecology Resources
+research_question_locked: >
+  HapGraph — Python software package for population admixture graph inference
+  using joint F-statistics + inter-population IBD sharing statistics,
+  Bayesian NUTS-MCMC estimation of admixture proportions (alpha) and timing (T),
+  applied to 1kGP 2022 26-population data.
+architecture_decision: greedy_topology_search_plus_fixed_topology_MCMC   # Full RJMCMC rejected (infeasible)
+f_stats_backend: scikit-allel   # R/rpy2/admixr dropped; pure Python
+ibd_timing_scope: "T in [5, 50] generations only"   # hap-ibd 2cM threshold constraint
+value_proposition: >
+  HapGraph unifies two currently-separate analysis steps (TreeMix for graph structure,
+  ALDER for admixture timing) into a single Bayesian framework that propagates uncertainty
+  jointly, enables model comparison across topologies, and provides the first
+  graph-model-integrated admixture timing estimates for T in [5, 50] generations.
+innovation_point: >
+  Joint F-statistics + inter-population IBD sharing likelihood for simultaneous
+  inference of graph topology, admixture proportions (alpha), and admixture timing (T)
+  — the IBD component is entirely absent from all existing population graph tools.
+
+# ── Domain ──────────────────────────────────────────────────────────────────
+domain: Human Population Genomics / Bioinformatics
+subdomain: Structural Variant (SV) Population Genetics — high-coverage 1000 Genomes Project (2022)
+
+# ── Research Type ────────────────────────────────────────────────────────────
+# D = Discovery/Data-driven: uncover new biological insights from data
+# C = Computational Tool:    build software that outperforms existing tools
+# M = Method/Model:          new algorithm benchmarked against baselines
+# H = Hybrid:                new method + biological discovery
+research_type: C   # Tool/Software — confirmed by user after Phase 1 exploration
+
+# ── Expert Persona ───────────────────────────────────────────────────────────
+expert_persona: >
+  Senior professor in computational population genetics and bioinformatics,
+  with expertise in demographic inference, coalescent theory, Bayesian statistics,
+  and software engineering for genomics. Reviewer for Bioinformatics, MBE,
+  Molecular Ecology Resources, PLOS Computational Biology.
+
+reviewer_focus:
+  - Tool utility: does it solve a real pain point that existing tools cannot?
+  - Methodological soundness: is the statistical model correct and well-justified?
+  - Benchmarking rigor: comparison against TreeMix, qpGraph, AdmixtureBayes on simulations
+  - Scalability: can it handle 20-50 populations on standard hardware?
+  - Uncertainty quantification: does it properly propagate parameter uncertainty?
+  - Reproducibility and usability: install, run, interpret with minimal friction
+  - Application to real data: 1kGP 2022 results biologically interpretable?
+
+# ── Data ─────────────────────────────────────────────────────────────────────
+data:
+  name: 1000 Genomes Project (2022 high-coverage release)
+  version: 20220422_3202_phased_SNV_INDEL_SV
+  samples: 3691
+  populations: 26  # across 5 super-populations: AFR, EUR, EAS, SAS, AMR
+  variant_types: [SNV, INDEL, SV]
+  coverage: 30x Illumina WGS, phased
+  chromosomes: chr1–chr22 (autosomes only)
+  location: /home/yanlin/1KGothers/1000GP/
+
+# ── Resources ────────────────────────────────────────────────────────────────
+resources:
+  compute: Single CPU server (multi-core assumed)
+  gpu: none
+  compute_budget: unknown — will estimate after Phase 3 plan
+  submission_deadline: none specified
+
+# ── Candidate Research Directions (to be ranked in Phase 1) ──────────────────
+# Preliminary directions — NOT locked until G1 gate
+candidate_directions:
+  - id: D1
+    title: SV population frequency spectrum across 26 populations
+    novelty_hook: >
+      High-coverage phased SVs allow accurate allele frequency estimation;
+      compare SV vs SNV site frequency spectra to infer demographic signatures
+  - id: D2
+    title: Natural selection signals in structural variants
+    novelty_hook: >
+      Scan for SV loci under positive or balancing selection; compare selection
+      coefficients between SV types (DEL/INS/DUP/INV) and SNVs
+  - id: D3
+    title: Population differentiation: SVs as ancestry informative markers
+    novelty_hook: >
+      Identify SVs with extreme FST; test whether SVs outperform SNVs for
+      fine-scale ancestry inference within super-populations
+  - id: D4
+    title: Linkage disequilibrium between SVs and SNVs across populations
+    novelty_hook: >
+      Characterize SV-SNV LD patterns; identify haplotype blocks carrying
+      population-specific SVs; implications for GWAS fine-mapping
+  - id: D5
+    title: Demographic history reconstruction using SV allele frequency
+    novelty_hook: >
+      Extend PSMC/SMC++ framework or use SV-derived summary statistics
+      to reconstruct population size history; compare to SNV-based estimates
+
+# ── Target Venues (preliminary) ──────────────────────────────────────────────
+target_venues:
+  primary:
+    - Genome Research
+    - Molecular Biology and Evolution (MBE)
+    - PLOS Genetics
+  secondary:
+    - BMC Genomics
+    - Human Molecular Genetics
+    - Frontiers in Genetics
