@@ -5,7 +5,9 @@ Given a fixed graph topology (with fitted branch lengths from greedy search),
 this module:
   1. Decomposes expected F2(alpha) as a quadratic polynomial in alpha — exact
      and differentiable in PyTensor.
-  2. Adds IBD timing likelihood:  mean_IBD_len(tgt, pop) ~ N(100/T, sigma^2).
+  2. Adds IBD timing likelihood (truncation-corrected, L_min = 2 cM):
+       E[L | L > 2] = 50/T + 2 cM   (both lineages contribute T meioses)
+       mean_IBD_len(tgt, pop) ~ N(50/T + 2, sigma^2)
 
 The quadratic decomposition for K=1 admixture edge (source → target, alpha):
   Q(alpha) = Q0 + alpha * dQ
@@ -332,16 +334,20 @@ class HapGraphLikelihood:
                     if pb == tgt or pb not in src_side:
                         continue
                     obs_L = ibd.get(tgt, pb, "mean_len")
-                    if np.isnan(obs_L) or obs_L <= 0:
+                    n_segs = ibd.get(tgt, pb, "n_segs")
+                    if np.isnan(obs_L) or obs_L <= 2.0 or n_segs < 5:
+                        # Skip pairs with no signal above the 2 cM filter
                         continue
                     ibd_L_list.append(obs_L)
-                    # IBD sigma combines:
-                    #   - sampling variance (~10% relative)
-                    #   - model approximation error: 100/T ignores minimum length
-                    #     cutoff and background IBD (~40% relative)
-                    # Total: ~50% relative error, floor at 3 cM.
-                    # This keeps T CIs calibrated for T in [5, 50] gen.
-                    ibd_se_list.append(max(obs_L * 0.5, 3.0))
+                    # Sigma for the sample mean of IBD lengths, derived from the
+                    # truncated-exponential model (L_min = 2 cM, rate = 2T/100):
+                    #   E[L | L > 2] = 50/T + 2   ⟹   50/T ≈ obs_L − 2
+                    #   Var[L | L > 2] = (50/T)^2  ⟹  std(mean) ≈ (obs_L-2)/√n
+                    # Add a model-error floor (background IBD, Ne effects): 2 cM.
+                    length_excess = max(obs_L - 2.0, 0.5)
+                    sigma_samp = length_excess / max(np.sqrt(n_segs), 1.0)
+                    sigma_model = 2.0
+                    ibd_se_list.append(float(np.sqrt(sigma_samp**2 + sigma_model**2)))
                     admix_map.append(m)
 
             if ibd_L_list:
@@ -356,8 +362,11 @@ class HapGraphLikelihood:
         F2 expected value is exact quadratic in alpha (PyTensor differentiable):
           exp_F2 = F2_0 + sum_k [alpha_k * C1_k + alpha_k^2 * C2_k]
 
-        IBD timing:
-          mean_len(tgt, pop) ~ N(100/T_k, sigma)
+        IBD timing (truncation-corrected, cross-population admixture IBD):
+          Both lineages contribute T meioses each back to the admixture event,
+          so the expected segment length for L > L_min (= 2 cM) is:
+            E[L | L > L_min] = 100/(2T) + L_min = 50/T + 2  cM
+          mean_len(tgt, pop) ~ N(50/T_k + 2, sigma)
         """
         import pymc as pm
         import pytensor.tensor as pt
@@ -384,7 +393,8 @@ class HapGraphLikelihood:
             T_for_pair = pt.stack(
                 [T_var[self.ibd_admix_map[m]] for m in range(len(self.ibd_obs_L))]
             )
-            exp_L = 100.0 / T_for_pair
+            # E[L | L > 2 cM] = 50/T + 2  (truncation-corrected IBD formula)
+            exp_L = 50.0 / T_for_pair + 2.0
             ibd_obs_t = pt.as_tensor_variable(self.ibd_obs_L.astype(np.float64))
             ibd_se_t = pt.as_tensor_variable(self.ibd_se_L.astype(np.float64))
             pm.Normal("ll_ibd", mu=exp_L, sigma=ibd_se_t, observed=ibd_obs_t)

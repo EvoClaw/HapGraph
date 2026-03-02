@@ -65,7 +65,16 @@ def evaluate_one(
 
     # ── 1. Feature computation ─────────────────────────────────────────────
     fstats = fstats_from_msprime_ts(sim.ts, sim.pop_map)
-    ibd = ibd_stats_from_msprime_ts(sim.ts, sim.pop_map, min_len_cM=2.0) if w_ibd_mcmc > 0 else None
+    # Pass the correct genome_len_morgan for cM conversion.
+    # sim.ts is 50 Mbp at 1e-8 recombination = 0.5 Morgan.
+    ibd = (
+        ibd_stats_from_msprime_ts(
+            sim.ts, sim.pop_map,
+            min_len_cM=2.0,
+            genome_len_morgan=sim.ibd_genome_len_morgan,
+        )
+        if w_ibd_mcmc > 0 else None
+    )
 
     f2_mat = fstats.f2_matrix()
     nj = nj_tree_from_f2(f2_mat, sim.pop_names)

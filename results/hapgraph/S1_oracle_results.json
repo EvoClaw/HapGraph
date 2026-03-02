@@ -17,7 +17,7 @@
       "T_mae": null,
       "alpha_ci_cover": null,
       "T_ci_cover": null,
-      "runtime_s": 3.1242117881774902
+      "runtime_s": 1.2274980545043945
     },
     {
       "seed": 2,
@@ -36,7 +36,7 @@
       "T_mae": null,
       "alpha_ci_cover": null,
       "T_ci_cover": null,
-      "runtime_s": 3.1200098991394043
+      "runtime_s": 1.170438289642334
     },
     {
       "seed": 3,
@@ -55,7 +55,7 @@
       "T_mae": null,
       "alpha_ci_cover": null,
       "T_ci_cover": null,
-      "runtime_s": 3.1472508907318115
+      "runtime_s": 1.3137807846069336
     },
     {
       "seed": 4,
@@ -74,7 +74,7 @@
       "T_mae": null,
       "alpha_ci_cover": null,
       "T_ci_cover": null,
-      "runtime_s": 3.127497434616089
+      "runtime_s": 1.275371789932251
     },
     {
       "seed": 5,
@@ -93,7 +93,7 @@
       "T_mae": null,
       "alpha_ci_cover": null,
       "T_ci_cover": null,
-      "runtime_s": 3.115917444229126
+      "runtime_s": 1.317248821258545
     },
     {
       "seed": 6,
@@ -112,7 +112,7 @@
       "T_mae": null,
       "alpha_ci_cover": null,
       "T_ci_cover": null,
-      "runtime_s": 3.143413782119751
+      "runtime_s": 1.05924654006958
     },
     {
       "seed": 7,
@@ -131,7 +131,7 @@
       "T_mae": null,
       "alpha_ci_cover": null,
       "T_ci_cover": null,
-      "runtime_s": 3.1177163124084473
+      "runtime_s": 1.0481946468353271
     },
     {
       "seed": 8,
@@ -150,7 +150,7 @@
       "T_mae": null,
       "alpha_ci_cover": null,
       "T_ci_cover": null,
-      "runtime_s": 3.1475133895874023
+      "runtime_s": 1.0838515758514404
     },
     {
       "seed": 9,
@@ -169,7 +169,7 @@
       "T_mae": null,
       "alpha_ci_cover": null,
       "T_ci_cover": null,
-      "runtime_s": 3.081831932067871
+      "runtime_s": 1.0326752662658691
     },
     {
       "seed": 10,
@@ -188,7 +188,7 @@
       "T_mae": null,
       "alpha_ci_cover": null,
       "T_ci_cover": null,
-      "runtime_s": 3.091262102127075
+      "runtime_s": 1.0234837532043457
     },
     {
       "seed": 11,
@@ -207,7 +207,7 @@
       "T_mae": null,
       "alpha_ci_cover": null,
       "T_ci_cover": null,
-      "runtime_s": 3.1233465671539307
+      "runtime_s": 1.0334351062774658
     },
     {
       "seed": 12,
@@ -226,7 +226,7 @@
       "T_mae": null,
       "alpha_ci_cover": null,
       "T_ci_cover": null,
-      "runtime_s": 3.1568593978881836
+      "runtime_s": 1.0590629577636719
     },
     {
       "seed": 13,
@@ -245,7 +245,7 @@
       "T_mae": null,
       "alpha_ci_cover": null,
       "T_ci_cover": null,
-      "runtime_s": 3.060004234313965
+      "runtime_s": 1.0179517269134521
     },
     {
       "seed": 14,
@@ -264,7 +264,7 @@
       "T_mae": null,
       "alpha_ci_cover": null,
       "T_ci_cover": null,
-      "runtime_s": 3.1180777549743652
+      "runtime_s": 1.024399757385254
     },
     {
       "seed": 15,
@@ -283,7 +283,7 @@
       "T_mae": null,
       "alpha_ci_cover": null,
       "T_ci_cover": null,
-      "runtime_s": 3.0932562351226807
+      "runtime_s": 1.0785584449768066
     },
     {
       "seed": 16,
@@ -302,7 +302,7 @@
       "T_mae": null,
       "alpha_ci_cover": null,
       "T_ci_cover": null,
-      "runtime_s": 3.0915956497192383
+      "runtime_s": 1.0246484279632568
     },
     {
       "seed": 17,
@@ -321,7 +321,7 @@
       "T_mae": null,
       "alpha_ci_cover": null,
       "T_ci_cover": null,
-      "runtime_s": 3.0705790519714355
+      "runtime_s": 1.0777316093444824
     },
     {
       "seed": 18,
@@ -340,7 +340,7 @@
       "T_mae": null,
       "alpha_ci_cover": null,
       "T_ci_cover": null,
-      "runtime_s": 3.112711191177368
+      "runtime_s": 1.0339226722717285
     },
     {
       "seed": 19,
@@ -359,7 +359,7 @@
       "T_mae": null,
       "alpha_ci_cover": null,
       "T_ci_cover": null,
-      "runtime_s": 3.0707688331604004
+      "runtime_s": 1.0890426635742188
     },
     {
       "seed": 20,
@@ -378,7 +378,7 @@
       "T_mae": null,
       "alpha_ci_cover": null,
       "T_ci_cover": null,
-      "runtime_s": 3.0356147289276123
+      "runtime_s": 1.0542306900024414
     }
   ]
 }

@@ -371,87 +371,102 @@ def fig2_benchmark_scatter():
 # Figure 3: Oracle vs E2E comparison + CI calibration
 # ─────────────────────────────────────────────────────────────────────────────
 def fig3_ablation():
+    """
+    Panel A: Topology detection accuracy across S1 (K=0), S2 (K=1), S3 (K=2).
+    Panel B: 95% CI coverage for alpha and T (S2 and S3 oracle).
+    """
     def load_json(path):
         with open(path) as f:
             return list(json.load(f).values())[0]
 
-    s2_oracle = load_json(RESULTS / "hapgraph/S2_oracle_results.json")
-    s2_e2e    = load_json(RESULTS / "hapgraph/S2_e2e_results.json")
-    s3_oracle = load_json(RESULTS / "hapgraph/S3_oracle_results.json")
+    s1 = load_json(RESULTS / "hapgraph/S1_oracle_results.json")
+    s2 = load_json(RESULTS / "hapgraph/S2_oracle_results.json")
+    s3 = load_json(RESULTS / "hapgraph/S3_oracle_results.json")
 
     def stats(rows, key):
         vals = [r[key] for r in rows if r.get(key) is not None]
-        return np.mean(vals), np.std(vals)
-
-    # Panel A: T MAE comparison Oracle vs E2E for S2
-    # Panel B: 95% CI coverage for alpha and T across S2 and S3
+        return (np.mean(vals), np.std(vals)) if vals else (float("nan"), 0)
 
     fig, axes = plt.subplots(1, 2, figsize=(8.2, 4.0))
-    fig.subplots_adjust(wspace=0.45)
+    fig.subplots_adjust(wspace=0.48)
 
-    # ── Panel A: T MAE bar ──────────────────────────────────────────────────
+    # ── Panel A: Topology detection ──────────────────────────────────────────
     ax = axes[0]
-    conditions  = ["Oracle\ntopology", "E2E pipeline\n(inferred topology)"]
-    t_oracle_m, t_oracle_s = stats(s2_oracle, "T_mae")
-    t_e2e_m,    t_e2e_s    = stats(s2_e2e,    "T_mae")
-    means  = [t_oracle_m, t_e2e_m]
-    stds   = [t_oracle_s, t_e2e_s]
-    colors = [BLUE, LBLUE]
 
-    bars = ax.bar(conditions, means, yerr=stds, color=colors, width=0.45,
-                  capsize=5, error_kw={"lw": 1.3}, edgecolor="white", linewidth=0.5,
-                  zorder=3)
-    ax.set_ylabel("T MAE (generations)", fontsize=9)
-    ax.set_title("Topology inference adds\nminimal estimation error (S2)", fontsize=9)
-    ax.set_ylim(0, max(means) + max(stds) + 3)
-    for bar, m, s in zip(bars, means, stds):
-        ax.text(bar.get_x() + bar.get_width()/2, m + s + 0.3,
-                f"{m:.1f}±{s:.1f}", ha="center", va="bottom", fontsize=8)
+    # S1: false positive rate (detected K>0 when K_true=0)
+    s1_fp = np.mean([r["detected_K"] > 0 for r in s1 if r["K_true"] == 0])
+    s1_k_correct = np.mean([r["greedy_correct_K"] for r in s1])
 
-    # Bracket showing difference is small
-    diff = abs(t_e2e_m - t_oracle_m)
-    ax.text(0.5, max(means) + max(stds) + 2.0,
-            f"Δ = {diff:.2f} gen (negligible)", ha="center", va="bottom",
-            fontsize=7.5, color=GRAY, transform=ax.transData)
+    s2_recall_m, s2_recall_s = stats(s2, "greedy_recall")
+    s2_prec_m,   s2_prec_s   = stats(s2, "greedy_precision")
+    s2_k_m,      _           = stats(s2, "greedy_correct_K")
+    s3_recall_m, s3_recall_s = stats(s3, "greedy_recall")
+    s3_prec_m,   s3_prec_s   = stats(s3, "greedy_precision")
+    s3_k_m,      _           = stats(s3, "greedy_correct_K")
 
-    ax.axhline(0, color="black", lw=0.6, alpha=0.3)
+    x = np.arange(3)
+    w = 0.28
+    # Recall (= 1 - FP rate for S1)
+    recalls = [1.0 - s1_fp, s2_recall_m, s3_recall_m]
+    precs   = [1.0 - s1_fp, s2_prec_m,   s3_prec_m]
+    recall_errs = [0, s2_recall_s, s3_recall_s]
+    prec_errs   = [0, s2_prec_s,   s3_prec_s]
+
+    b1 = ax.bar(x - w/2, recalls, w, color=BLUE,   label="Recall",
+                yerr=recall_errs, capsize=3, error_kw={"lw": 1.0},
+                edgecolor="white", zorder=3)
+    b2 = ax.bar(x + w/2, precs,   w, color=ORANGE, label="Precision",
+                yerr=prec_errs,   capsize=3, error_kw={"lw": 1.0},
+                edgecolor="white", zorder=3)
+
+    ax.axhline(1.0, color=GRAY, lw=0.8, ls="--", alpha=0.5, zorder=2)
+    ax.set_ylim(0, 1.22)
+    ax.set_xticks(x)
+    ax.set_xticklabels(["S1\n(K=0 true)", "S2\n(K=1 true)", "S3\n(K=2 true)"], fontsize=8.5)
+    ax.set_ylabel("Admixture detection performance", fontsize=8.5)
+    ax.set_title("Greedy topology search accuracy\nacross simulation scenarios", fontsize=9)
+    ax.legend(fontsize=7.5, loc="upper right", frameon=False)
+    for bar in list(b1) + list(b2):
+        h = bar.get_height()
+        if not np.isnan(h):
+            ax.text(bar.get_x() + bar.get_width()/2, h + 0.01,
+                    f"{h:.0%}", ha="center", va="bottom", fontsize=7)
     ax.text(-0.32, -0.08, "(A)", transform=ax.transAxes,
             fontsize=10, fontweight="bold", va="top")
 
-    # ── Panel B: CI coverage ────────────────────────────────────────────────
+    # ── Panel B: CI coverage ─────────────────────────────────────────────────
     ax = axes[1]
-    s2_acov_m, _ = stats(s2_oracle, "alpha_ci_cover")
-    s2_tcov_m, _ = stats(s2_oracle, "T_ci_cover")
-    s3_acov_m, _ = stats(s3_oracle, "alpha_ci_cover")
-    s3_tcov_m, _ = stats(s3_oracle, "T_ci_cover")
+    s2_acov_m, _ = stats(s2, "alpha_ci_cover")
+    s2_tcov_m, _ = stats(s2, "T_ci_cover")
+    s3_acov_m, _ = stats(s3, "alpha_ci_cover")
+    s3_tcov_m, _ = stats(s3, "T_ci_cover")
 
     scenario_labels = ["S2 (K=1)", "S3 (K=2)"]
     alpha_covs = [s2_acov_m, s3_acov_m]
     t_covs     = [s2_tcov_m, s3_tcov_m]
-    x = np.arange(len(scenario_labels))
-    w = 0.32
-    b1 = ax.bar(x - w/2, alpha_covs, w, color=ORANGE, label="α CI coverage",
+    xb = np.arange(len(scenario_labels))
+    wb = 0.32
+    b3 = ax.bar(xb - wb/2, alpha_covs, wb, color=ORANGE, label="α CI coverage",
                 edgecolor="white", zorder=3)
-    b2 = ax.bar(x + w/2, t_covs,     w, color=BLUE,   label="T CI coverage",
+    b4 = ax.bar(xb + wb/2, t_covs,     wb, color=BLUE,   label="T CI coverage",
                 edgecolor="white", zorder=3)
     ax.axhline(0.95, color="black", lw=1.1, ls="--", alpha=0.6,
                label="Nominal 95%", zorder=2)
-    ax.axhline(0.85, color=GRAY,   lw=1.1, ls=":",  alpha=0.6,
-               label="Pre-specified target (85%)", zorder=2)
     ax.set_ylim(0, 1.18)
-    ax.set_xticks(x); ax.set_xticklabels(scenario_labels, fontsize=9)
+    ax.set_xticks(xb); ax.set_xticklabels(scenario_labels, fontsize=9)
     ax.set_ylabel("Empirical 95% CI coverage", fontsize=9)
-    ax.set_title("CI calibration: T coverage meets\npre-specified 85% target", fontsize=9)
-    ax.legend(fontsize=7, loc="upper right", frameon=False)
-    for bars in [b1, b2]:
+    ax.set_title("Credible interval calibration\n(oracle topology)", fontsize=9)
+    ax.legend(fontsize=7, loc="lower right", frameon=False)
+    for bars in [b3, b4]:
         for bar in bars:
             h = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width()/2, h + 0.01,
-                    f"{h:.0%}", ha="center", va="bottom", fontsize=7.5)
+            if not np.isnan(h):
+                ax.text(bar.get_x() + bar.get_width()/2, h + 0.01,
+                        f"{h:.0%}", ha="center", va="bottom", fontsize=7.5)
     ax.text(-0.32, -0.08, "(B)", transform=ax.transAxes,
             fontsize=10, fontweight="bold", va="top")
 
-    fig.suptitle("Robustness to topology estimation and credible interval calibration",
+    fig.suptitle("Topology detection accuracy and credible interval calibration",
                  fontsize=10, y=1.03)
 
     fig.savefig(OUTDIR / "fig3_ablation.pdf")

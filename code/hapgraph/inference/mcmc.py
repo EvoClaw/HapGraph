@@ -1,5 +1,18 @@
 """
 Bayesian inference of alpha and T for fixed topology, using PyMC 5 + NUTS.
+
+Priors
+------
+alpha ~ Beta(1, 1)    — uniform on [0, 1], shape (K,)
+T_raw ~ HalfNormal(σ=20)   — T = T_raw + 5, so T ≥ 5 generations
+    (prior mean ≈ 5 + 20*√(2/π) ≈ 21 generations)
+
+IBD likelihood (via HapGraphLikelihood.add_to_pymc_model):
+    E[L | L > L_min] = 50/T + 2  cM   (L_min = 2 cM truncation correction)
+    Both admixed and source lineages contribute T meioses back to the admixture
+    event, so the effective rate parameter is 2T/100 per cM, giving a mean of
+    100/(2T) = 50/T cM for an untruncated segment.  With L_min = 2 cM the
+    conditional mean shifts to 50/T + 2 cM.
 """
 
 import numpy as np

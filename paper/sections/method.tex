@@ -147,40 +147,32 @@ admixture signal.
 
 \subsection*{Stage II: IBD-Based Timing Estimation}
 
-Under a single-pulse admixture model, a haplotype segment of source ancestry
-introduced into the admixed population $C$ at generation $T$ in the past
-is broken by recombination over $T$ subsequent meioses.
-The expected length of such a \emph{cross-population} IBD segment detected
-between an individual in $C$ and an individual in the source population
-is therefore:
+Under a single-pulse admixture model, cross-population IBD segments are
+detected between haplotypes in the admixed population $C$ and haplotypes
+in source population $A$.
+Both the admixed lineage (which carries $T$ meioses of recombination since
+the admixture event) and the source lineage (which traces $T$ meioses
+back to the same ancestral haplotype via the source population) contribute
+to the break-up of the shared segment.
+The expected length of such a segment is therefore:
 \begin{equation}
-  \mathbb{E}[\bar{L}] = \frac{100}{T} \quad\text{(cM)},
+  \mathbb{E}[\bar{L}] = \frac{100}{2T} = \frac{50}{T} \quad\text{(cM)},
   \label{eq:ibd_timing}
 \end{equation}
 where $T$ is the number of generations since the admixture event
 \citep{Palamara2012}.
-This is the \emph{ancestry tract} relationship, not the within-population IBD
-formula: for IBD between two individuals sharing a common ancestor $g$
-generations ago in a randomly mating population, the expected segment length
-is $100/(2g)$~cM (two lineages each contributing $g$ meioses to the path
-length).
-For cross-population admixture-derived IBD, only one lineage carries the
-broken-up ancestral tract ($T$ meioses on the admixed side); the source
-individual's copy is essentially unbroken.
-Hence $\mathbb{E}[\bar{L}] = 100/T$, not $100/(2T)$, for this class of
-segments \citep{Palamara2012}.
 
 IBD segments are detected using \hapibd{} \citep{Browning2020} at a minimum
 length of $\ell_{\min} = 2$~cM.
-When the length distribution is conditioned on $L > \ell_{\min}$, the
-conditional expectation is strictly larger than $100/T$ (truncated
-exponential); for $T \leq 50$ generations, $\ell_{\min}/\mathbb{E}[\bar{L}]
-= 0.1$, so the bias is $< 10\%$ and is absorbed into the heteroscedastic
-noise term described below.
-The 2~cM threshold also constrains inference to $T \in [5,\, 50]$ generations:
-events older than 50 generations produce segments predominantly below 2~cM,
-while very recent events ($T < 5$) produce segments too long to separate
-from background relatedness \citep{Browning2020}.
+Conditioning on $L > \ell_{\min}$ shifts the expected mean; for a truncated
+exponential with rate $\lambda = 2T/100$ per~cM, the conditional expectation is
+\begin{equation}
+  \mathbb{E}[\bar{L} \mid L > \ell_{\min}]
+    = \frac{50}{T} + \ell_{\min}
+    = \frac{50}{T} + 2 \quad\text{(cM)},
+  \label{eq:ibd_trunc}
+\end{equation}
+which is the model used in the IBD likelihood (see below).
 
 The MCMC jointly samples both $\alpha$ and $T$ as free parameters.
 The joint log-likelihood combines the $F_2$ term (which informs $\alpha$)
@@ -191,18 +183,39 @@ with the IBD term (which informs $T$):
       \!\left(\frac{F_2^{\mathrm{obs}}(i,j) - F_2^{\mathrm{exp}}(i,j;\alpha)}
                     {\hat{\sigma}_{ij}}\right)^{\!2}
   +\; \sum_k \log \mathcal{N}\!\left(
-      L_k;\; \frac{100}{T},\; \sigma_k^2
+      L_k;\; \frac{50}{T} + 2,\; \sigma_k^2
     \right),
   \label{eq:lik}
 \end{equation}
 where $F_2^{\mathrm{exp}}(i,j;\alpha)$ is the quadratic polynomial in $\alpha$
 from equation~(\ref{eq:f2_ll}), $L_k$ is the observed mean IBD length for
-source-clade pair $k$, and $\sigma_k = \max(0.5 \cdot L_k,\; 3.0)$~cM
-is a heteroscedastic noise term capturing stochastic variance in segment
-counts and model misspecification at the 2~cM threshold.
+source-clade pair $k$, and $\sigma_k$ is a heteroscedastic noise term.
+Specifically,
+\begin{equation}
+  \sigma_k = \sqrt{\left(\frac{L_k - 2}{\sqrt{n_k}}\right)^2 + \sigma_{\mathrm{bg}}^2},
+  \quad \sigma_{\mathrm{bg}} = 2~\text{cM},
+  \label{eq:ibd_sigma}
+\end{equation}
+where $n_k$ is the number of IBD segments observed for pair $k$ and $\sigma_{\mathrm{bg}}$
+is a background variance floor capturing model misspecification (background IBD,
+finite-$N_e$ effects).
+Pairs with $n_k < 5$ or $L_k \leq \ell_{\min}$ are excluded from the IBD term.
 The priors are $\alpha \sim \mathrm{Beta}(1,1)$ (uniform over $[0,1]$) and
 $T = T_{\mathrm{raw}} + 5$ where $T_{\mathrm{raw}} \sim \mathrm{HalfNormal}(\sigma = 20)$;
 the shift ensures $T > 5$ consistent with the 2~cM detection threshold.
+
+\emph{Calibration note.}
+For populations with effective size $N_e \gg T$ (typical of humans with
+$N_e \sim 10^4$), the observed mean IBD length is shifted from
+equation~(\ref{eq:ibd_trunc}) by a sample-size-dependent correction
+$\approx 2N_e / n_{\mathrm{source}}$ generations \citep{Palamara2012}.
+This correction is small when whole-genome IBD data are available
+(many segments reduce the correction); our 1000~Genomes analysis uses
+hap-ibd on all autosomes ($\approx35$~Morgan), providing sufficient
+signal.
+For the simulation benchmark, which uses a single 50~Mbp chromosome
+($0.5$~Morgan), timing estimates carry larger uncertainty and should be
+interpreted with caution.
 Posterior inference uses the No-U-Turn Sampler (NUTS)
 \citep{Hoffman2014} as implemented in PyMC \citep{AbrilPimentel2023}.
 We run four independent chains with 1000 adaptation steps and 1000 posterior
@@ -253,4 +266,13 @@ Each scenario was replicated across 20 independent random seeds.
 All simulations used $n = 30$ diploid individuals per population,
 a sequence length of 50~Mbp, recombination rate
 $10^{-8}$ per base pair per generation, mutation rate $10^{-8}$, and
-effective population size $N_e = 10{,}000$.
+effective population size $N_e = 1{,}000$.
+Population split times were set proportional to $N_e$ to maintain
+realistic $F_2$ signal magnitudes (clade splits at 250~generations, backbone
+root at 500~generations for~S2; clade splits at 250~generations, intermediate
+node at 500~generations, root at 800~generations for~S3).
+The same tree sequence provides both F-statistics (using SNP genotypes) and
+IBD detection (using the 50~Mbp genetic map corresponding to $0.5$~Morgan).
+Timing estimates from these single-chromosome simulations are affected by
+the sample-size correction described above and should be interpreted as
+approximate (see Calibration note).

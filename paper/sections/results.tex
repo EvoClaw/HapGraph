@@ -29,39 +29,34 @@ computational efficiency of the F-statistics-only greedy step.
 \subsection*{S2: Parameter Recovery for a Single Admixture Event}
 
 In S2 (seven populations, $K=1$, $\alpha \sim \mathrm{Uniform}(0.1, 0.5)$,
-$T \in \{10, \ldots, 49\}$ generations), the greedy search (run here
-without a uniqueness constraint on admixture targets) achieved a recall of
-1.00: the true admixed population was always identified.
-In 9 of 20 seeds (45\%), the search inferred exactly $K=1$; in the remaining
-11 seeds, a second edge was added to the same already-detected target,
-inflating the inferred event count to $K=2$ (detected target population
-precision = 1.00, as no non-admixed population was mislabelled).
-The secondary edge infers a redundant additional source for the same
-population, reflecting a model-selection degeneracy in small graphs: with
-seven populations, the log-likelihood gain from a second source sometimes
-exceeds the stopping threshold even when the true model has only one source.
+$T \in \{10, \ldots, 49\}$ generations), the greedy search correctly
+identified the full topology (exact $K=1$, correct target, correct sources)
+in 17 of 20 seeds ($K$-exact = 85\%).
+Recall and precision were both 0.85: in the 3 seeds where the search failed,
+it either missed the admixture event or mis-identified the target population,
+reflecting ambiguity in the F-statistic landscape of small (7-population)
+graphs.
 The current implementation offers an optional uniqueness constraint (one
-admixture edge per target population) that eliminates this over-detection
-at the cost of missing genuine multi-source events; we leave the choice to
-the analyst and return to its implications in the Discussion.
+admixture edge per target population) that can reduce such errors; we leave
+the choice to the analyst and return to its implications in the Discussion.
 
 Under the oracle topology (the true $K=1$ graph), the $F_3$ method-of-moments
 estimator recovered admixture proportions with a mean absolute error (MAE)
-of $0.061 \pm 0.040$, where errors were largest near $\alpha \approx 0.5$
+of $0.133 \pm 0.062$, where errors were largest near $\alpha \approx 0.5$
 where the quadratic estimator (equation~\ref{eq:f3mom}) is least sensitive.
 Stage~II MCMC timing estimation (IBD-driven term of equation~\ref{eq:lik})
-achieved a $T$ MAE of $11.4 \pm 4.9$ generations,
+achieved a $T$ MAE of $11.1 \pm 4.5$ generations,
 close to but slightly exceeding the design target of 10 generations.
-The 95\% highest-density interval for $T$ achieved 85\% empirical coverage ---
-exactly at the pre-specified target (Table~\ref{tab:simulation},
+The 95\% highest-density interval for $T$ achieved 95\% empirical coverage ---
+above the pre-specified target of 85\% (Table~\ref{tab:simulation},
 Figure~\ref{fig:ablation}B).
-By contrast, the 95\% CI for $\alpha$ covered the true value in only 55\%
+By contrast, the 95\% CI for $\alpha$ covered the true value in only 10\%
 of seeds, substantially below target; we attribute this to the $F_3$ MOM
-delta-method approximation underestimating tail uncertainty near
-$\alpha \approx 0.5$ and to residual NJ-tree misplacement errors
-(see Discussion).
-MCMC convergence was excellent: $\hat{R}_{\max} = 1.000 \pm 0.000$,
-$\mathrm{ESS}_{\min} = 2731 \pm 700$ (target: $> 200$).
+delta-method approximation underestimating uncertainty, the small simulation
+$N_e = 1{,}000$ inflating genetic drift, and residual NJ-tree misplacement
+errors (see Discussion).
+MCMC convergence was excellent: $\hat{R}_{\max} = 1.001 \pm 0.002$
+(target: $< 1.01$).
 
 \begin{figure}[htbp]
   \centering
@@ -80,44 +75,47 @@ $\mathrm{ESS}_{\min} = 2731 \pm 700$ (target: $> 200$).
   \label{fig:benchmark}
 \end{figure}
 
-\subsection*{Ablation: Impact of Topology Estimation Error on Timing}
+\subsection*{Ablation: Topology Accuracy and Credible Interval Calibration}
 
-A key question for any two-stage pipeline is whether errors in Stage~I
-(topology inference) propagate into Stage~II (timing estimation).
-To assess this, we compared $T$~MAE under (i) the \emph{oracle} topology
-(the true $K=1$ graph is given directly to Stage~II) and (ii) the full
-\emph{end-to-end} (E2E) pipeline, where Stage~II receives the topology
-inferred by the greedy search (Figure~\ref{fig:ablation}A).
-The E2E pipeline achieved $T$ MAE of $11.4 \pm 4.8$ generations, identical
-to the oracle condition ($11.4 \pm 4.9$ generations; $\Delta = 0.00$
-generations).
-This equivalence is not trivial: in S2 the greedy search over-detects
-admixture edges in 55\% of seeds, yet the IBD-based posterior for $T$ is
-robust to these extra edges because the relevant IBD signal is concentrated
-in the true target--source pairs.
-The result confirms that Stage~II timing estimates inherit negligible error
-from Stage~I topology imprecision, validating the practical utility of the
-two-stage decoupling approach.
+Figure~\ref{fig:ablation} summarises two complementary aspects of
+\hapgraph{}'s behaviour across scenarios.
+Panel~A shows greedy topology detection performance (recall and precision)
+for S1 (no admixture, $K=0$), S2 ($K=1$), and S3 ($K=2$).
+S1 achieves perfect specificity (recall = precision = 1.00, equivalently
+FP rate = 0\%).
+Detection accuracy improves from S2 (recall = precision = 0.85) to S3
+(recall = 0.975, precision = 1.00), consistent with richer F-statistic
+signal in larger population graphs (Figure~\ref{fig:ablation}A).
+
+Panel~B reports empirical 95\% credible interval coverage for $\alpha$ and
+$T$ under oracle topology in S2 and S3.
+$T$ CI coverage exceeds the nominal level in both scenarios (S2: 95\%;
+S3: 97.5\%), indicating that the MCMC posterior is conservative for timing.
+$\alpha$ CI coverage is far below nominal (S2: 10\%; S3: 20\%), attributable
+to the delta-method underestimating the $F_3$ MOM variance, particularly
+under the high genetic drift of the $N_e = 1{,}000$ simulation and the
+quadratic insensitivity near $\alpha \approx 0.5$
+(Figure~\ref{fig:ablation}B; see Discussion).
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.88\linewidth]{figures/fig3_ablation}
   \caption{%
-    \textbf{Robustness to topology estimation and credible interval
-    calibration.}
-    \textbf{(A)} T~MAE comparison between oracle topology (upper bound)
-    and the full end-to-end (E2E) pipeline with inferred topology on S2
-    ($n=20$ seeds; bars show mean $\pm$ 1~SD).
-    The two conditions are statistically indistinguishable
-    ($\Delta = 0.00$~generations), demonstrating that topology inference
-    adds negligible estimation error.
+    \textbf{Topology detection accuracy and credible interval calibration.}
+    \textbf{(A)} Greedy search recall (blue) and precision (orange) across
+    three simulation scenarios ($n=20$ seeds each; bars show mean $\pm$
+    1~SD).
+    S1 ($K=0$ true): perfect specificity (no spurious edges added).
+    S2 ($K=1$ true): recall = precision = 0.85.
+    S3 ($K=2$ true): recall = 0.975, precision = 1.00.
+    Dashed line: perfect performance.
     \textbf{(B)} Empirical 95\% credible interval coverage for $\alpha$
     (orange) and $T$ (blue) under oracle topology for S2 ($K=1$) and
     S3 ($K=2$).
     Dashed line: nominal 95\% level.
-    Dotted line: pre-specified target of 85\% for $T$.
-    $T$ CI coverage meets the target in both scenarios; $\alpha$ CI
-    coverage is substantially below nominal (see Discussion).
+    $T$ CI coverage exceeds the nominal level in both scenarios;
+    $\alpha$ CI coverage is substantially below nominal due to
+    delta-method variance underestimation (see Discussion).
   }
   \label{fig:ablation}
 \end{figure}
@@ -128,30 +126,31 @@ The key test of \hapgraph{}'s utility beyond existing tools is whether it
 can simultaneously resolve multiple admixture events from distinct source
 clades.
 In S3 (ten populations, $K=2$, two independent cross-clade admixture events),
-the greedy search recovered the exact topology ($K=2$, both correct targets)
-in all 20 seeds: $K$-exact-correct = 100\%, recall = 1.00, precision = 1.00
+the greedy search recovered the exact topology in 19 of 20 seeds
+($K$-exact = 95\%), with recall = 0.975 and precision = 1.00
 (Table~\ref{tab:simulation}).
-The improvement in topological accuracy from S2 to S3 reflects a well-known
-property of graph model selection: with more populations and richer F-statistic
-structure, the BIC penalty more precisely discriminates true signal from noise.
+In the one failing seed, the search identified only one of the two admixture
+events (missing recall), but never added a spurious edge (perfect precision).
+The improvement in topological accuracy relative to S2 reflects a well-known
+property of graph model selection: with more populations and richer
+F-statistic structure, the BIC penalty more precisely discriminates true
+signal from noise.
 
-Under oracle topology, parameter recovery was comparable to or better than S2
+Under oracle topology, parameter recovery was comparable to S2
 (Figure~\ref{fig:benchmark}).
-Alpha MAE was $0.054 \pm 0.024$ (slightly lower than S2, consistent with both
-admixture proportions being drawn from a uniform distribution and the larger
-population context providing more informative $F_2$ denominators).
-$T$ MAE was $10.9 \pm 4.2$ generations across both admixture events; notably,
-the standard deviation of $T$ estimates was lower in S3 than S2 (4.2 vs.\
-4.9 generations), suggesting that the increased number of populations
-provides more calibrating IBD pairs.
+Alpha MAE was $0.116 \pm 0.044$; the modest reduction compared to S2
+is consistent with the larger population context providing more informative
+$F_2$ denominators.
+$T$ MAE was $10.7 \pm 4.0$ generations across both admixture events; notably,
+the standard deviation of $T$ estimates was slightly lower in S3 than S2
+(4.0 vs.\ 4.5 generations), suggesting that the increased number of
+populations provides more calibrating IBD pairs.
 The 95\% highest-density interval for $T$ (from MCMC) covered the true value
-in 93\% of seeds --- above target and consistent across both admixture events
---- while the $\alpha$ delta-method CI coverage of 62\% remained below the
-target of 85\% for the same reasons as in S2.
-MCMC diagnostics remained clean: $\hat{R}_{\max} = 1.001 \pm 0.003$,
-$\mathrm{ESS}_{\min} = 3204 \pm 837$, with 1.6 divergences on average per run.
-Runtime increased to $13 \pm 1$ seconds per seed to accommodate the larger
-population count.
+in 97.5\% of seeds --- above the pre-specified 85\% target and consistent
+across both admixture events --- while the $\alpha$ delta-method CI coverage
+of 20\% remained far below target for the same reasons as in S2
+(see Discussion).
+MCMC convergence was clean: $\hat{R}_{\max} = 1.000 \pm 0.000$.
 
 \input{tables/tab1_simulation}
 

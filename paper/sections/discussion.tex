@@ -32,51 +32,70 @@ The two-stage approach thus represents a practical compromise between
 statistical completeness and scalability, a design philosophy shared by the
 wider family of greedy-then-refine methods in phylogenetics.
 
-\paragraph{Edge over-detection and the stopping criterion.}
-In S2 ($K=1$), the greedy search inferred the correct number of admixture
-edges in 45\% of seeds; in the remaining 55\%, a second edge was added to
-the same target population (precision on admixed \emph{populations} = 100\%).
-This behaviour arose because the benchmarks were run without the optional
-uniqueness-per-target constraint; with the constraint enabled, over-detection
-to the same target is prevented entirely.
-More fundamentally, the stopping criterion in equation~(\ref{eq:penalty})
-is a heuristic that combines a BIC-inspired penalty with a safety constant;
-it is not a formally derived information criterion, because the $N(N-1)/2$
-pairwise $F_2$ statistics are correlated across loci, violating the
-independence assumption underlying BIC.
+\paragraph{Edge detection accuracy and the stopping criterion.}
+In S2 ($K=1$), the greedy search recovered the exact topology in 17 of 20
+seeds (85\%); in the remaining 3 seeds, the search either missed the admixed
+target or mislabelled a non-admixed population, each reducing both recall and
+precision to 0.85.
+The stopping criterion in equation~(\ref{eq:penalty}) is a heuristic that
+combines a BIC-inspired penalty with a safety constant; it is not a formally
+derived information criterion, because the $N(N-1)/2$ pairwise $F_2$
+statistics are correlated across loci, violating the independence assumption
+underlying BIC.
 The constant 5.0 was chosen empirically to achieve 0\% false positive rate
 on pure trees (S1) with the present simulation parameters; it may need
 recalibration for datasets with different SNP density or population size.
 In S3 ($K=2$, ten populations), the richer F-statistic structure provides
-stronger penalty discrimination, and the exact topology was recovered in 100\%
-of seeds.
+stronger penalty discrimination, and the exact topology was recovered in 19 of
+20 seeds (95\%); the single failing seed identified one of the two events
+but missed the other, maintaining perfect precision.
 We recommend users treat the inferred $K$ as an upper bound in data-sparse
 settings and use $F_4$ consistency tests \citep{Patterson2012} to
 independently validate detected events.
 
 \paragraph{Alpha uncertainty quantification.}
-The 95\% credible interval for $\alpha$ achieved only 55--62\% empirical
+The 95\% credible interval for $\alpha$ achieved only 10--20\% empirical
 coverage across scenarios, substantially below the nominal 95\%.
-The F3 method-of-moments delta-method approximation is known to
+Two factors compound to produce this severe undercoverage.
+First, the $F_3$ method-of-moments delta-method approximation is known to
 underestimate uncertainty when $\alpha \approx 0.5$ (where the quadratic
 estimator is least sensitive to $F_3$ perturbations) and when the
 source populations are imperfectly represented by the NJ tree
 (introducing model misspecification not captured by the jackknife
 standard error).
-The 3\% model-uncertainty floor, while improving coverage from near-zero
-to 55--62\%, is not sufficient to reach the 85\% target.
-More principled alpha uncertainty quantification — for instance, by
+Second, our simulation benchmarks used $N_e = 1{,}000$, which produces
+elevated genetic drift and inflated pairwise $F_2$ values; under these
+conditions the delta-method variance estimate, which assumes approximately
+normal $F_3$ statistics, is particularly unreliable.
+More principled alpha uncertainty quantification --- for instance, by
 bootstrapping the $F_3$ and $F_2$ statistics jointly across blocks, or by
-propagating NJ tree uncertainty via a parametric bootstrap — is a priority
+propagating NJ tree uncertainty via a parametric bootstrap --- is a priority
 for future development.
+We caution users that the reported $\alpha$ confidence intervals should
+be treated as approximate guides rather than calibrated 95\% intervals
+in the current implementation.
 
 \paragraph{Timing estimation: calibration and scope.}
-By contrast, the 95\% credible interval for $T$ achieved 85--93\% empirical
-coverage, meeting or slightly exceeding the pre-specified 85\% target.
-This reflects the better-posed nature of the timing problem given fixed
-$\alpha$: the IBD decay model $\mathbb{E}[\bar{L}] = 100/T$ is well-specified
-under the single-pulse assumption, and the heteroscedastic noise model
-$\sigma_i = \max(0.5 L_i, 3.0)$ adequately captures IBD count variance.
+The 95\% credible interval for $T$ achieved 95--97.5\% empirical coverage,
+exceeding the pre-specified 85\% target.
+This indicates that the MCMC posterior for timing is somewhat conservative
+(over-dispersed), which is preferable to overconfidence.
+The IBD timing model uses the corrected expectation
+$\mathbb{E}[\bar{L} \mid \bar{L} > L_{\min}] = 50/T + L_{\min}$
+(reflecting that IBD between modern individuals decays at rate $1/(2T)$ per
+Morgan rather than $1/T$, plus a truncation bias term; $L_{\min} = 2$~cM),
+and a noise model that combines sampling variance ($\propto 1/n_k$, where
+$n_k$ is the IBD segment count for pair $k$) with a 2~cM background floor.
+This formulation is well-specified under the single-pulse assumption and
+the NUTS sampler achieves near-perfect $\hat{R}$ in all simulation replicates.
+Importantly, the simulation benchmarks used $N_e = 1{,}000$ and 0.5-Morgan
+equivalent genome length; under these conditions the mean IBD length is
+influenced by a coalescence correction of order $2N_e / n_{\text{haploids}}$
+that can bias $T$ estimates toward a narrow range
+(see the calibration note in the Methods).
+In whole-genome applications such as the 1kGP, where the effective genome
+length is $\sim$35~Morgans and $N_e$ is larger, this bias is substantially
+reduced.
 The 2~cM segment detection threshold of \hapibd{} \citep{Browning2020}
 restricts reliable inference to $T \in [5,\, 50]$ generations; admixture
 events older than 50 generations produce segments shorter than 2~cM that
