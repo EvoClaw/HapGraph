@@ -10,9 +10,13 @@ the admixture proportion $\alpha$ and the admixture timing $T$ for each
 inferred admixture event (Figure~\ref{fig:pipeline}).
 The pipeline is deliberately structured as two decoupled stages.
 \textbf{Stage I} uses F-statistics exclusively to infer the graph topology
-and estimate admixture proportions; \textbf{Stage II} holds the inferred
-topology fixed and uses inter-population identity-by-descent (IBD) sharing
-to estimate $T$ under a Bayesian NUTS sampler.
+and to provide a $F_3$ method-of-moments (MOM) point estimate and CI for
+each admixture proportion $\alpha$.
+\textbf{Stage II} holds the inferred topology fixed and runs a Bayesian
+NUTS sampler with a joint F$_2$+IBD likelihood that simultaneously refines
+$\alpha$ and estimates the admixture timing $T$; the $F_3$ MOM estimate
+from Stage I is reported for $\alpha$, while $T$ and its credible interval
+are taken from the MCMC posterior.
 This decoupling is motivated by preliminary experiments in which
 incorporating IBD directly into the greedy likelihood caused systematic
 edge over-detection, consistent with the known tendency of IBD signals to
@@ -32,10 +36,12 @@ fixed, avoids this confounder.
     the admixture graph topology; admixture proportions $\hat{\alpha}$
     are estimated by the topology-independent $F_3$ method-of-moments
     estimator.
-    \textbf{Stage~II} (orange) receives the fixed topology and
-    $\hat{\alpha}$ from Stage~I; it ingests pre-computed IBD segment
-    lengths from \hapibd{} and estimates timing $T$ via a NUTS-MCMC
-    sampler over the $\mathbb{E}[\bar{L}] = 100/T$ likelihood.
+    \textbf{Stage~II} (orange) receives the fixed topology from Stage~I;
+    it ingests pre-computed IBD segment lengths from \hapibd{} and runs
+    a NUTS-MCMC sampler with a joint $F_2$+IBD likelihood
+    (equation~\ref{eq:lik}) that simultaneously infers $\alpha$ and $T$.
+    The reported $\alpha$ and its CI are the Stage~I $F_3$ MOM estimates;
+    the reported $T$ and CI are the MCMC posterior.
     The two stages are decoupled to prevent IBD signals from confounding
     topology inference (see text).
   }
@@ -176,27 +182,40 @@ events older than 50 generations produce segments predominantly below 2~cM,
 while very recent events ($T < 5$) produce segments too long to separate
 from background relatedness \citep{Browning2020}.
 
-Given fixed $\hat{\alpha}$ from Stage I, the log-likelihood of the observed
-mean IBD lengths $\{L_i\}$ over source-clade population pairs is
+The MCMC jointly samples both $\alpha$ and $T$ as free parameters.
+The joint log-likelihood combines the $F_2$ term (which informs $\alpha$)
+with the IBD term (which informs $T$):
 \begin{equation}
-  \log p(\mathbf{L} \mid T) = \sum_i \log \mathcal{N}\!\left(
-    L_i;\; \frac{100}{T},\; \sigma_i^2
-  \right),
+  \log p(\mathbf{F}_2, \mathbf{L} \mid \alpha, T)
+  = \sum_{i<j} -\frac{1}{2}
+      \!\left(\frac{F_2^{\mathrm{obs}}(i,j) - F_2^{\mathrm{exp}}(i,j;\alpha)}
+                    {\hat{\sigma}_{ij}}\right)^{\!2}
+  +\; \sum_k \log \mathcal{N}\!\left(
+      L_k;\; \frac{100}{T},\; \sigma_k^2
+    \right),
   \label{eq:lik}
 \end{equation}
-where $\sigma_i = \max(0.5 \cdot L_i,\; 3.0)$ is a heteroscedastic noise
-term that captures stochastic variance in segment counts and model
-misspecification at the 2~cM threshold.
-Posterior inference over $T$ uses the No-U-Turn Sampler (NUTS)
+where $F_2^{\mathrm{exp}}(i,j;\alpha)$ is the quadratic polynomial in $\alpha$
+from equation~(\ref{eq:f2_ll}), $L_k$ is the observed mean IBD length for
+source-clade pair $k$, and $\sigma_k = \max(0.5 \cdot L_k,\; 3.0)$~cM
+is a heteroscedastic noise term capturing stochastic variance in segment
+counts and model misspecification at the 2~cM threshold.
+The priors are $\alpha \sim \mathrm{Beta}(1,1)$ (uniform over $[0,1]$) and
+$T = T_{\mathrm{raw}} + 5$ where $T_{\mathrm{raw}} \sim \mathrm{HalfNormal}(\sigma = 20)$;
+the shift ensures $T > 5$ consistent with the 2~cM detection threshold.
+Posterior inference uses the No-U-Turn Sampler (NUTS)
 \citep{Hoffman2014} as implemented in PyMC \citep{AbrilPimentel2023}.
-The timing parameter is reparameterised as $T = T_{\mathrm{raw}} + 5$,
-where $T_{\mathrm{raw}} \sim \mathrm{HalfNormal}(\sigma = 20)$; this places
-prior mass on $T \in (5, \sim\!60)$ generations while allowing the sampler to
-explore larger values, and ensures $T > 5$ consistent with the 2~cM detection
-threshold.
 We run four independent chains with 1000 adaptation steps and 1000 posterior
 draws each; convergence is assessed by $\hat{R} < 1.05$ and effective sample
 size $\mathrm{ESS} > 200$.
+
+\emph{Reported estimates.}
+For $T$, we extract the MCMC posterior mean and 95\% highest-density
+interval (HDI).
+For $\alpha$, we report the $F_3$ MOM point estimate (equation~\ref{eq:f3mom})
+and its delta-method confidence interval; the MOM estimator is computationally
+simpler and avoids numerical instability of the $F_2$ polynomial likelihood
+near $\alpha \approx 0.5$, where $F_2^{\mathrm{exp}}$ is nearly flat in $\alpha$.
 
 \subsection*{Implementation}
 
@@ -223,13 +242,15 @@ We designed three scenarios of increasing complexity.
 of the greedy search; because the true graph is a pure tree, any detected
 admixture edge is a false positive.
 \textbf{S2} (seven populations, $K=1$; $\alpha \sim \mathrm{Uniform}(0.1, 0.5)$,
-$T \sim \mathrm{Uniform}(10, 50)$ generations) tests detection and parameter
-recovery for a single cross-clade admixture event.
+$T$ drawn as a discrete uniform integer from $\{10, \ldots, 49\}$ generations)
+tests detection and parameter recovery for a single cross-clade admixture event.
 \textbf{S3} (ten populations, $K=2$; two independent cross-clade admixture
-events with distinct source pairs) tests simultaneous recovery of multiple
+events with distinct source pairs, each with $\alpha$ and $T$ drawn independently
+from the same ranges as S2) tests simultaneous recovery of multiple
 non-overlapping admixture events, a necessary capability for application to
 real multi-population data.
 Each scenario was replicated across 20 independent random seeds.
-All simulations used a sequence length of 50~Mbp, recombination rate
+All simulations used $n = 30$ diploid individuals per population,
+a sequence length of 50~Mbp, recombination rate
 $10^{-8}$ per base pair per generation, mutation rate $10^{-8}$, and
 effective population size $N_e = 10{,}000$.

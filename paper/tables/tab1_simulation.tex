@@ -4,11 +4,11 @@
 \centering
 \caption{Simulation benchmark results across three scenarios (20 seeds each).
 Topology metrics (columns 3--5) evaluate the greedy Stage~I search.
-Parameter metrics (columns 6--9) evaluate Stage~II NUTS-MCMC under the
-oracle topology: $\alpha$ and $T$ are jointly sampled from the posterior
-defined by equations~(\ref{eq:f2_ll}) and (\ref{eq:lik}), with the admixture
-proportion $\alpha$ re-estimated during Stage~II rather than taken directly
-from the Stage~I $F_3$ point estimate.
+Parameter metrics (columns 6--9) evaluate Stage~II under the oracle topology.
+\emph{Reported $\alpha$}: $F_3$ method-of-moments point estimate and delta-method
+95\% CI (equation~\ref{eq:f3mom}).
+\emph{Reported $T$}: NUTS-MCMC posterior mean and 95\% highest-density interval
+from the joint $F_2$+IBD likelihood (equation~\ref{eq:lik}).
 $K$-exact: fraction of seeds where the inferred number of admixture events
 exactly equals $K_{\mathrm{true}}$.
 CI coverage: empirical fraction of seeds where the true value lies inside

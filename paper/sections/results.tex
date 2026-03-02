@@ -29,7 +29,7 @@ computational efficiency of the F-statistics-only greedy step.
 \subsection*{S2: Parameter Recovery for a Single Admixture Event}
 
 In S2 (seven populations, $K=1$, $\alpha \sim \mathrm{Uniform}(0.1, 0.5)$,
-$T \sim \mathrm{Uniform}(10, 50)$ generations), the greedy search (run here
+$T \in \{10, \ldots, 49\}$ generations), the greedy search (run here
 without a uniqueness constraint on admixture targets) achieved a recall of
 1.00: the true admixed population was always identified.
 In 9 of 20 seeds (45\%), the search inferred exactly $K=1$; in the remaining
@@ -49,9 +49,10 @@ Under the oracle topology (the true $K=1$ graph), the $F_3$ method-of-moments
 estimator recovered admixture proportions with a mean absolute error (MAE)
 of $0.061 \pm 0.040$, where errors were largest near $\alpha \approx 0.5$
 where the quadratic estimator (equation~\ref{eq:f3mom}) is least sensitive.
-IBD-based timing estimation achieved a $T$ MAE of $11.4 \pm 4.9$ generations,
+Stage~II MCMC timing estimation (IBD-driven term of equation~\ref{eq:lik})
+achieved a $T$ MAE of $11.4 \pm 4.9$ generations,
 close to but slightly exceeding the design target of 10 generations.
-The 95\% credible interval for $T$ achieved 85\% empirical coverage ---
+The 95\% highest-density interval for $T$ achieved 85\% empirical coverage ---
 exactly at the pre-specified target (Table~\ref{tab:simulation},
 Figure~\ref{fig:ablation}B).
 By contrast, the 95\% CI for $\alpha$ covered the true value in only 55\%
@@ -143,9 +144,10 @@ $T$ MAE was $10.9 \pm 4.2$ generations across both admixture events; notably,
 the standard deviation of $T$ estimates was lower in S3 than S2 (4.2 vs.\
 4.9 generations), suggesting that the increased number of populations
 provides more calibrating IBD pairs.
-The 95\% CI for $T$ covered the true value in 93\% of seeds --- above target
-and consistent across both admixture events --- while the $\alpha$ CI coverage
-of 62\% remained below the target of 85\% for the same reasons as in S2.
+The 95\% highest-density interval for $T$ (from MCMC) covered the true value
+in 93\% of seeds --- above target and consistent across both admixture events
+--- while the $\alpha$ delta-method CI coverage of 62\% remained below the
+target of 85\% for the same reasons as in S2.
 MCMC diagnostics remained clean: $\hat{R}_{\max} = 1.001 \pm 0.003$,
 $\mathrm{ESS}_{\min} = 3204 \pm 837$, with 1.6 divergences on average per run.
 Runtime increased to $13 \pm 1$ seconds per seed to accommodate the larger
@@ -230,6 +232,4 @@ corridor \citep{Moorjani2013}.
 Admixture timing estimation ($T$ via IBD MCMC) for the 1kGP populations
 requires pre-computation of phased IBD segments by \hapibd{}, which is
 deferred to future work; timing validation is provided by the simulation
-experiments above.
-lation
 experiments above.
