@@ -73,12 +73,15 @@ over-detection; IBD is therefore reserved exclusively for timing inference
 after the topology is fixed.
 Applied to coalescent simulations under three scenarios (S1: pure tree,
 $K=0$; S2: one cross-clade event, $K=1$; S3: two independent events, $K=2$),
-\hapgraph{} achieves a false positive rate of 0\% on pure trees and
-recovers all true admixture target populations with 100\% recall.
+\hapgraph{} achieves a false positive rate of 0\% on pure trees; greedy
+topology recall is 85\% in S2 and 97.5\% in S3 (precision 85\% and 100\%,
+respectively).
 Parameter estimation under oracle topology achieves alpha MAE of
-$0.054$--$0.061$ and T MAE of $10.9$--$11.4$ generations; the 95\% credible
-intervals for $T$ achieve 85--93\% empirical coverage meeting the pre-specified
-target, while alpha CIs remain conservative at 55--62\% (see Discussion).
+$0.116$--$0.133$ and $T$ MAE of $10.7$--$11.1$ generations; the 95\%
+credible intervals for $T$ achieve 95--97.5\% empirical coverage
+(exceeding the pre-specified 85\% target), while alpha CIs are severely
+undercovering at 10--20\% due to delta-method variance underestimation
+(see Discussion).
 Applied to the 1000 Genomes Project 2022 high-coverage dataset
 \citep{ByrskaBishop2022}, \hapgraph{} infers $K=8$ admixture events whose
 targets and proportions are consistent with published population history
@@ -94,7 +97,7 @@ and proportion inference with IBD-based Bayesian timing estimation;
 (ii) a topology-independent $F_3$ method-of-moments estimator for admixture
 proportions, robust to neighbor-joining misplacement;
 (iii) a BIC-based greedy search with a scale-adaptive stopping criterion
-achieving 0\% false positive rate on pure trees and 100\% target recall
+achieving 0\% false positive rate on pure trees and 85--97.5\% recall
 across $K \leq 2$ simulation scenarios;
 (iv) an open-source Python implementation with documented validation on
 coalescent simulations and application to the 1kGP 2022 dataset.

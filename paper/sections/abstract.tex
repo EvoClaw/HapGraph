@@ -13,15 +13,15 @@ Stage I uses a BIC-guided greedy search on F-statistics to infer the admixture
 graph topology and estimates admixture proportions via a topology-independent
 $F_3$ method-of-moments estimator.
 Stage II fixes the inferred topology and estimates admixture timing $T$ via
-Bayesian NUTS-MCMC over an IBD segment-length likelihood, exploiting the
-relationship $\mathbb{E}[\bar{L}] = 100/T$~cM between mean IBD segment length
-and admixture time.
+Bayesian NUTS-MCMC over an IBD segment-length likelihood, using the
+truncated-exponential expectation $\mathbb{E}[\bar{L} \mid L > 2~\text{cM}]
+= 50/T + 2$~cM.
 In coalescent simulations across three scenarios (S1: $K=0$, six populations;
 S2: $K=1$; S3: $K=2$, ten populations; $n=20$ seeds each), \hapgraph{}
-achieves a false positive rate of 0\% on pure trees and 100\% recall of true
-admixture target populations across all scenarios.
+achieves a false positive rate of 0\% on pure trees; greedy topology recall
+reaches 85\% in S2 and 97.5\% in S3.
 Admixture timing estimates under oracle topology achieve MAE of
-$10.9$--$11.4$ generations with 85--93\% empirical 95\% CI coverage.
+$10.7$--$11.1$ generations with 95--97.5\% empirical 95\% CI coverage.
 Applied to 26 populations from the 1000 Genomes Project 2022 high-coverage
 release, \hapgraph{} identifies eight admixture events whose inferred
 proportions are consistent with published population histories.
