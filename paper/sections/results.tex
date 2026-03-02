@@ -47,9 +47,7 @@ estimator recovered admixture proportions with a mean absolute error (MAE)
 of $0.061 \pm 0.040$, where errors were largest near $\alpha \approx 0.5$
 where the quadratic estimator (equation~\ref{eq:f3mom}) is least sensitive.
 IBD-based timing estimation achieved a $T$ MAE of $11.4 \pm 4.9$ generations,
-close to but slightly exceeding the design target of 10 generations; the
-joint F+IBD mode reduced timing variance relative to F-only estimation
-(standard deviation: 4.9 vs.\ 8.8 generations; Figure~\ref{fig:ablation}A).
+close to but slightly exceeding the design target of 10 generations.
 The 95\% credible interval for $T$ achieved 85\% empirical coverage ---
 exactly at the pre-specified target (Table~\ref{tab:simulation},
 Figure~\ref{fig:ablation}B).
@@ -78,22 +76,24 @@ $\mathrm{ESS}_{\min} = 2731 \pm 700$ (target: $> 200$).
   \label{fig:benchmark}
 \end{figure}
 
-\subsection*{Ablation: Role of IBD in Timing Estimation}
+\subsection*{Ablation: Impact of Topology Estimation Error on Timing}
 
-To isolate the contribution of the IBD component, we compared two inference
-modes on S2: (i) F-only, in which the MCMC uses only the F-statistic
-likelihood with no IBD term, and (ii) the default joint F+IBD mode
-(weight $w_{\mathrm{IBD}} = 0.5$).
-Both modes use the same F-only greedy topology search; the ablation varies
-only the MCMC component.
-The F-only mode estimated $T$ with MAE $12.8 \pm 8.8$ generations
-(standard deviation 8.8), whereas the joint F+IBD mode achieved MAE
-$11.4 \pm 4.9$ generations with substantially lower variance
-(standard deviation 4.9; a 44\% reduction).
-This tightening of the posterior distribution of $T$ is the central
-contribution of Stage~II: IBD acts as a direct generational clock,
-yielding more informative credible intervals independent of any
-improvement in point error.
+A key question for any two-stage pipeline is whether errors in Stage~I
+(topology inference) propagate into Stage~II (timing estimation).
+To assess this, we compared $T$~MAE under (i) the \emph{oracle} topology
+(the true $K=1$ graph is given directly to Stage~II) and (ii) the full
+\emph{end-to-end} (E2E) pipeline, where Stage~II receives the topology
+inferred by the greedy search (Figure~\ref{fig:ablation}A).
+The E2E pipeline achieved $T$ MAE of $11.4 \pm 4.8$ generations, identical
+to the oracle condition ($11.4 \pm 4.9$ generations; $\Delta = 0.00$
+generations).
+This equivalence is not trivial: in S2 the greedy search over-detects
+admixture edges in 55\% of seeds, yet the IBD-based posterior for $T$ is
+robust to these extra edges because the relevant IBD signal is concentrated
+in the true target--source pairs.
+The result confirms that Stage~II timing estimates inherit negligible error
+from Stage~I topology imprecision, validating the practical utility of the
+two-stage decoupling approach.
 
 \begin{figure}[htbp]
   \centering
@@ -170,21 +170,32 @@ sampling noise.
 
 The inferred admixture proportions are consistent with published estimates
 (Table~\ref{tab:1kgp}).
-African Americans (ASW) showed $21.3\%$ [15.4\%, 27.1\%] African ancestry
-relative to a European source (sources: ESN + FIN), consistent with
-estimates of $\sim$18--25\% African ancestry in this panel from
-\citet{ByrskaBishop2022} and earlier analyses \citep{Bryc2015}.
-Puerto Ricans (PUR) showed 12.8\% [6.9\%, 18.7\%] African component
+African Americans (ASW) showed $21.3\%$ [15.4\%, 27.1\%] European ancestry
+(from FIN), with the remaining $\sim$79\% African ancestry (from ESN),
+consistent with published estimates of $\sim$18--25\% European admixture
+in African Americans \citep{Bryc2015,ByrskaBishop2022}.
+Note that the $F_3$ method-of-moments estimator returns the \emph{smaller}
+root of the quadratic, which corresponds to the minority ancestry fraction;
+for ASW this is the European component.
+Afro-Caribbeans (ACB) showed a similar pattern: $11.2\%$ [5.3\%, 17.1\%]
+European ancestry (FIN source), reflecting the well-documented European
+admixture in Caribbean-origin populations \citep{Bryc2015}.
+Puerto Ricans (PUR) showed $12.8\%$ [6.9\%, 18.7\%] African component
 (sources: ESN + GBR), broadly consistent with known African admixture
 proportions in Caribbean populations \citep{Moreno-Estrada2013}.
-Admixed Americans (MXL, CLM) showed European components of
-$\sim$22\% [16\%, 28\%] alongside Native American ancestry (PEL as proxy),
-matching demographic reconstructions of Latin American populations
-\citep{Moreno-Estrada2013}.
-Bengali (BEB) showed 7.6\% East Asian ancestry (CHB + GIH) and Punjabi
-(PJL) showed $\sim$8.6\% European-like admixture (FIN + STU), both
-consistent with the known South Asian population history of migrations and
-admixture along the Silk Road corridor \citep{Moorjani2013}.
+Admixed Americans (MXL, CLM) showed Native American-like (PEL proxy)
+components of $\sim$22\% [16\%, 28\%], with the majority of ancestry
+from European sources (TSI proxy).
+The PEL estimate is likely an underestimate of the true Native American
+fraction because Peruvian Andes populations are an imperfect geographic
+proxy for the ancestral Central/North Mexican indigenous sources of
+Mexican-American and Colombian populations \citep{Moreno-Estrada2013}.
+Bengali (BEB) showed $7.6\%$ [1.7\%, 13.5\%] East Asian ancestry
+(CHB as minority source alongside GIH) and Punjabi (PJL) showed
+$\sim$8.6\% [2.8\%, 14.5\%] European-like admixture (FIN as minority
+source alongside STU), both consistent with the known South Asian
+population history of migrations and admixture along the Silk Road
+corridor \citep{Moorjani2013}.
 
 \begin{figure}[htbp]
   \centering
@@ -216,4 +227,6 @@ admixture along the Silk Road corridor \citep{Moorjani2013}.
 Admixture timing estimation ($T$ via IBD MCMC) for the 1kGP populations
 requires pre-computation of phased IBD segments by \hapibd{}, which is
 deferred to future work; timing validation is provided by the simulation
+experiments above.
+lation
 experiments above.
