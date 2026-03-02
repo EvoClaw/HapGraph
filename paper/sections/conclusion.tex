@@ -1,30 +1,44 @@
 % conclusion.tex — HapGraph
 % Target: 200+ words
 
-We have presented \hapgraph{}, an open-source Python tool for joint admixture
-graph inference and timing estimation from phased SNP data.
-By combining an F-statistics-based greedy topology search with a Bayesian
-IBD-based timing model, \hapgraph{} addresses a gap that has persisted in
-population genetic inference: the lack of a unified framework for estimating
-who mixed with whom and when, within a single calibrated analysis.
+We have presented \hapgraph{}, an open-source Python package implementing
+a two-stage sequential pipeline for admixture graph inference and IBD-based
+timing estimation from phased SNP data.
+Stage~I uses F-statistics to infer the graph topology and estimate admixture
+proportions; Stage~II fixes that topology and estimates the admixture timing
+$T$ via Bayesian NUTS-MCMC over an IBD segment-length likelihood.
+This design addresses a gap in population genetic practice: the lack of a
+unified tool that connects the \emph{who} (topology and proportions) with
+the \emph{when} (timing), while remaining computationally tractable at
+$N \gtrsim 10$ populations.
+We emphasise that \hapgraph{} is a sequential pipeline, not a fully joint
+Bayesian inference: the topology is treated as fixed in Stage~II and is
+not a random variable in the posterior.
 
 Simulation experiments across three scenarios demonstrate that \hapgraph{}
 achieves zero false positive rate on pure trees; greedy topology recall
 reaches 85\% for $K=1$ (S2) and 97.5\% for $K=2$ (S3), with precision 85\%
 and 100\% respectively.
-Under oracle topology, posterior timing estimates are conservative but
-well-calibrated (95--97.5\% empirical 95\% CI coverage for $T$ across $K=1$
-and $K=2$ scenarios; target: 85\%).
+Under oracle topology, the $T$ posterior produces correct coverage
+(95--97.5\%) but with mean CI widths of $\sim$43 generations, indicating
+that timing is not precisely identified in the 0.5-Morgan simulation
+benchmark; the model is correctly specified but underpowered to resolve
+$T$ in this setting.
 The key limitation identified in benchmarking — severely under-calibrated
 uncertainty for admixture proportions (10--20\% empirical 95\% CI coverage)
 — is attributable to the delta-method approximation breaking down under high
 genetic drift ($N_e = 1{,}000$) and near $\alpha \approx 0.5$; improved
 uncertainty quantification for $\alpha$ is a priority for future development.
 
-Application to the 1000 Genomes Project 2022 dataset yielded eight biologically
-interpretable admixture events consistent with published population histories,
-demonstrating that \hapgraph{}'s topology inference scales to 26 populations
-and produces results suitable for downstream biological interpretation.
+Application to the 1000 Genomes Project 2022 dataset yielded eight admixture
+events; seven of the eight targets (ASW, ACB, PUR, CLM, MXL, BEB, PJL)
+are populations whose admixed ancestry is well established in the literature,
+providing external validation of the topology inference.
+The eighth inferred event (LWK) carries a significant $F_3$ Z-score but
+lacks a clear single-pulse biological interpretation and is flagged for
+further validation (see Results).
+These results demonstrate that \hapgraph{}'s topology inference scales to
+26 populations and identifies known admixture events without manual curation.
 
 Future directions include: extending simulation validation to $K \geq 3$;
 applying IBD-based timing estimation to real data following hap-ibd

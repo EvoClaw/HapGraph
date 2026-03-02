@@ -75,11 +75,16 @@ We caution users that the reported $\alpha$ confidence intervals should
 be treated as approximate guides rather than calibrated 95\% intervals
 in the current implementation.
 
-\paragraph{Timing estimation: calibration and scope.}
-The 95\% credible interval for $T$ achieved 95--97.5\% empirical coverage,
-exceeding the pre-specified 85\% target.
-This indicates that the MCMC posterior for timing is somewhat conservative
-(over-dispersed), which is preferable to overconfidence.
+\paragraph{Timing estimation: resolution and scope.}
+The 95\% HDI for $T$ achieved 95--97.5\% empirical coverage in the
+simulation benchmarks, but with mean widths of $\sim$43 generations
+spanning nearly the entire plausible range.
+Inspection of individual estimates shows that $\hat{T}$ clusters around
+$\sim$28 generations regardless of the true $T$ (correlation 0.52 in S2,
+0.75 in S3), confirming that timing is not identifiable in these simulations.
+The correct coverage reflects approximately uninformative posteriors,
+not precise inference.
+This limitation is expected and understood:
 The IBD timing model uses the corrected expectation
 $\mathbb{E}[\bar{L} \mid \bar{L} > L_{\min}] = 50/T + L_{\min}$
 (reflecting that IBD between modern individuals decays at rate $1/(2T)$ per
@@ -116,7 +121,7 @@ phased IBD pre-computation that is available in principle but was deferred
 from the current study.
 No direct quantitative comparison to \treemix{} or other baseline tools was
 performed; because \treemix{} does not estimate $T$, a comparison of alpha
-and topology accuracy would illuminate the cost of the joint framework
+and topology accuracy would illuminate the cost of the two-stage pipeline
 relative to the F-statistics-only baseline, and is a priority for future work.
 Finally, the current model assumes a single admixture pulse per target
 population; extending the IBD likelihood to accommodate multiple pulses

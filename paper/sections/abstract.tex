@@ -20,8 +20,11 @@ In coalescent simulations across three scenarios (S1: $K=0$, six populations;
 S2: $K=1$; S3: $K=2$, ten populations; $n=20$ seeds each), \hapgraph{}
 achieves a false positive rate of 0\% on pure trees; greedy topology recall
 reaches 85\% in S2 and 97.5\% in S3.
-Admixture timing estimates under oracle topology achieve MAE of
-$10.7$--$11.1$ generations with 95--97.5\% empirical 95\% CI coverage.
+Under oracle topology, $T$ MAE is $10.7$--$11.1$ generations; however,
+the 95\% CI widths average $\sim$43 generations (nearly the full prior
+range), indicating that timing is not precisely identified in these
+0.5-Morgan simulations --- real whole-genome data would provide
+substantially better resolution.
 Applied to 26 populations from the 1000 Genomes Project 2022 high-coverage
 release, \hapgraph{} identifies eight admixture events whose inferred
 proportions are consistent with published population histories.

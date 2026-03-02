@@ -13,8 +13,8 @@ Reconstructing this history requires inferring not only
 \emph{who mixed with whom} (the admixture graph topology and proportions)
 but also \emph{when} (the admixture timing in generations before the present).
 These two questions are today addressed by separate frameworks applied
-sequentially, with no principled joint inference; this gap is the
-motivation for the present work.
+sequentially, without a unified pipeline that connects topology, proportion,
+and timing estimation; this gap is the motivation for the present work.
 
 \paragraph{Admixture graph inference.}
 The admixture graph — a directed acyclic graph in which internal nodes
@@ -58,16 +58,21 @@ problems only sequentially: users infer topology with F-statistic tools and
 subsequently run a timing method under the fixed topology, propagating
 topology uncertainty into timing estimates without any feedback loop.
 
-\paragraph{The case for joint inference.}
+\paragraph{The case for an integrated pipeline.}
 Topology misspecification — a common outcome of greedy graph search — biases
 downstream timing estimates, because the IBD likelihood depends on which
 populations are designated as admixed and which as sources.
 Conversely, timing information can resolve topology degeneracies: two competing
 graphs may be equally consistent with $F_2$ statistics yet make different IBD
 predictions, allowing the IBD likelihood to discriminate between them.
-A jointly calibrated framework would propagate uncertainty coherently across
-topology, proportions, and timing, yielding credible intervals rather than
-the point estimates returned by current pipelines.
+A fully joint Bayesian framework would propagate uncertainty coherently across
+topology, proportions, and timing, but is computationally prohibitive for
+$N \gtrsim 10$ populations \citep{Nielsen2023}.
+\hapgraph{} takes a practical intermediate step: a sequential two-stage
+pipeline that connects topology and proportion inference (Stage~I,
+F-statistics only) with Bayesian timing estimation (Stage~II, IBD),
+achieving tractability at the cost of treating the Stage~I topology as fixed
+in Stage~II rather than as a random variable.
 
 \paragraph{This work: \hapgraph{}.}
 We introduce \hapgraph{}, a Python package implementing a two-stage integrated

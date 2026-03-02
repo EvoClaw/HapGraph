@@ -540,7 +540,7 @@ def fig4_pipeline():
             fontweight="bold", color=GREEN, zorder=4)
 
     box(ax, 2.15, 1.85, 1.5, 1.1, "F₂/F₃ stats",
-        "Block-jackknife\n± bias-correction", C_STAGE1, fontsize=8)
+        "Block-jackknife SE\nF₃ bias-corrected", C_STAGE1, fontsize=8)
     box(ax, 3.85, 1.85, 1.5, 1.1, "NJ tree +\nGreedy search",
         "BIC-adaptive\nstopping", C_STAGE1, fontsize=8)
     box(ax, 2.15, 0.65, 3.2, 0.95, "F₃ MOM estimator",
@@ -559,7 +559,7 @@ def fig4_pipeline():
             fontweight="bold", color=ORANGE, zorder=4)
 
     box(ax, 5.95, 1.85, 2.55, 1.1, "IBD segment lengths",
-        "hap-ibd  ≥ 2 cM\nE[L̄] = 100/T cM", C_STAGE2, fontsize=8)
+        "hap-ibd  ≥ 2 cM\nE[L̄|L>2] = 50/T + 2 cM", C_STAGE2, fontsize=8)
     box(ax, 5.95, 0.65, 2.55, 0.95, "NUTS-MCMC",
         "4 chains · 1000 draws\nR̂ < 1.05, ESS > 200", C_STAGE2, fontsize=8)
 

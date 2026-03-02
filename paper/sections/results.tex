@@ -45,18 +45,24 @@ estimator recovered admixture proportions with a mean absolute error (MAE)
 of $0.133 \pm 0.062$, where errors were largest near $\alpha \approx 0.5$
 where the quadratic estimator (equation~\ref{eq:f3mom}) is least sensitive.
 Stage~II MCMC timing estimation (IBD-driven term of equation~\ref{eq:lik})
-achieved a $T$ MAE of $11.1 \pm 4.5$ generations,
-close to but slightly exceeding the design target of 10 generations.
-The 95\% highest-density interval for $T$ achieved 95\% empirical coverage ---
-above the pre-specified target of 85\% (Table~\ref{tab:simulation},
-Figure~\ref{fig:ablation}B).
-By contrast, the 95\% CI for $\alpha$ covered the true value in only 10\%
-of seeds, substantially below target; we attribute this to the $F_3$ MOM
-delta-method approximation underestimating uncertainty, the small simulation
-$N_e = 1{,}000$ inflating genetic drift, and residual NJ-tree misplacement
-errors (see Discussion).
-MCMC convergence was excellent: $\hat{R}_{\max} = 1.001 \pm 0.002$
-(target: $< 1.01$).
+achieved a $T$ MAE of $11.1 \pm 4.5$ generations.
+However, inspection of individual estimates reveals that $T$ is essentially
+non-identifiable in these simulations: posterior means clustered in a narrow
+band of $26$--$32$ generations regardless of the true $T$ (range 10--48),
+with a correlation between $\hat{T}$ and $T_{\mathrm{true}}$ of only 0.52.
+The 95\% HDI width averaged $\sim$43 generations, nearly spanning the entire
+plausible range; the 95\% empirical coverage of 95\% therefore reflects
+wide, approximately uninformative posteriors rather than precise timing
+inference (Table~\ref{tab:simulation}, Figure~\ref{fig:ablation}B).
+This non-identifiability is expected: with only 0.5~Morgan of simulated genome
+and $N_e = 1{,}000$, the mean IBD length is dominated by the
+$2N_e/n_{\mathrm{haploids}}$ coalescence correction, which overwhelms the
+admixture timing signal (see Methods, Calibration note, and Discussion).
+The 95\% CI for $\alpha$ covered the true value in only 10\%
+of seeds; we attribute this to the $F_3$ MOM delta-method approximation
+underestimating uncertainty under high genetic drift and near $\alpha \approx 0.5$
+(see Discussion).
+MCMC convergence was excellent: $\hat{R}_{\max} = 1.001 \pm 0.002$.
 
 \begin{figure}[htbp]
   \centering
@@ -141,15 +147,13 @@ Under oracle topology, parameter recovery was comparable to S2
 Alpha MAE was $0.116 \pm 0.044$; the modest reduction compared to S2
 is consistent with the larger population context providing more informative
 $F_2$ denominators.
-$T$ MAE was $10.7 \pm 4.0$ generations across both admixture events; notably,
-the standard deviation of $T$ estimates was slightly lower in S3 than S2
-(4.0 vs.\ 4.5 generations), suggesting that the increased number of
-populations provides more calibrating IBD pairs.
-The 95\% highest-density interval for $T$ (from MCMC) covered the true value
-in 97.5\% of seeds --- above the pre-specified 85\% target and consistent
-across both admixture events --- while the $\alpha$ delta-method CI coverage
-of 20\% remained far below target for the same reasons as in S2
-(see Discussion).
+$T$ MAE was $10.7 \pm 4.0$ generations across both admixture events.
+As in S2, posterior means clustered tightly (26.3--29.3 generations,
+correlation with $T_{\mathrm{true}}$ = 0.75 across events) with mean CI
+widths of $\sim$43 generations; the 97.5\% empirical coverage again
+reflects wide posteriors rather than precise identification.
+The $\alpha$ delta-method CI coverage of 20\% remained far below nominal for
+the same reasons as in S2 (see Discussion).
 MCMC convergence was clean: $\hat{R}_{\max} = 1.000 \pm 0.000$.
 
 \input{tables/tab1_simulation}

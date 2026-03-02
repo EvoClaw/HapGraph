@@ -4,34 +4,36 @@
 \centering
 \caption{Simulation benchmark results across three scenarios (20 seeds each).
 Topology metrics (columns 3--5) evaluate the greedy Stage~I search.
-Parameter metrics (columns 6--9) evaluate Stage~II under the oracle topology.
+Parameter metrics (columns 6--10) evaluate Stage~II under the oracle topology.
 \emph{Reported $\alpha$}: $F_3$ method-of-moments point estimate and delta-method
 95\% CI (equation~\ref{eq:f3mom}).
 \emph{Reported $T$}: NUTS-MCMC posterior mean and 95\% highest-density interval
-from the joint $F_2$+IBD likelihood (equation~\ref{eq:lik}).
+from the combined $F_2$+IBD likelihood (equation~\ref{eq:lik}).
 $K$-exact: fraction of seeds where the inferred number of admixture events
 exactly equals $K_{\mathrm{true}}$.
 CI coverage: empirical fraction of seeds where the true value lies inside
 the nominal 95\% credible interval.
+$T$ CI width: mean width of the 95\% HDI for $T$ (generations);
+wide CIs indicate low resolution, not precision.
 All values are means; $\pm$ gives one standard deviation.
 N/A: no admixture events to estimate in S1 ($K=0$).}
 \label{tab:simulation}
 \small
-\begin{tabular}{lcccccccc}
+\begin{tabular}{lccccccccc}
 \toprule
- & & \multicolumn{3}{c}{Topology (Stage I)} & \multicolumn{4}{c}{Parameters (Stage II, oracle topology)} \\
-\cmidrule(lr){3-5}\cmidrule(lr){6-9}
+ & & \multicolumn{3}{c}{Topology (Stage I)} & \multicolumn{5}{c}{Parameters (Stage II, oracle topology)} \\
+\cmidrule(lr){3-5}\cmidrule(lr){6-10}
 Scenario & $K_{\mathrm{true}}$ & $K$-exact & Recall & Precision
          & $\alpha$ MAE & $T$ MAE (gen)
-         & $\alpha$ CI cov. & $T$ CI cov. \\
+         & $\alpha$ CI cov. & $T$ CI cov. & $T$ CI width \\
 \midrule
-S1 (6 pops) & 0 & 1.00 & --- & --- & --- & --- & --- & --- \\
+S1 (6 pops) & 0 & 1.00 & --- & --- & --- & --- & --- & --- & --- \\
 S2 (7 pops) & 1 & 0.85 & 0.85 & 0.85
             & $0.133 \pm 0.062$ & $11.1 \pm 4.5$
-            & 10\% & 95\% \\
+            & 10\% & 95\% & $\sim$43 gen \\
 S3 (10 pops) & 2 & 0.95 & 0.975 & 1.00
              & $0.116 \pm 0.044$ & $10.7 \pm 4.0$
-             & 20\% & 97.5\% \\
+             & 20\% & 97.5\% & $\sim$43 gen \\
 \bottomrule
 \end{tabular}
 \end{table}
