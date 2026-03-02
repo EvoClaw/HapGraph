@@ -9,13 +9,17 @@ population genetic inference: the lack of a unified framework for estimating
 who mixed with whom and when, within a single calibrated analysis.
 
 Simulation experiments across three scenarios demonstrate that \hapgraph{}
-achieves zero false positive rate on pure trees, 100\% recall of true
-admixture target populations, and well-calibrated posterior timing estimates
-(85--93\% empirical coverage for $T$ across $K=1$ and $K=2$ scenarios).
-The key limitation identified in benchmarking — under-calibrated uncertainty
-for admixture proportions (55--62\% empirical coverage) — is a known
-challenge of the $F_3$ method-of-moments delta-method approximation near
-$\alpha \approx 0.5$, and is a priority for future development.
+achieves zero false positive rate on pure trees; greedy topology recall
+reaches 85\% for $K=1$ (S2) and 97.5\% for $K=2$ (S3), with precision 85\%
+and 100\% respectively.
+Under oracle topology, posterior timing estimates are conservative but
+well-calibrated (95--97.5\% empirical 95\% CI coverage for $T$ across $K=1$
+and $K=2$ scenarios; target: 85\%).
+The key limitation identified in benchmarking — severely under-calibrated
+uncertainty for admixture proportions (10--20\% empirical 95\% CI coverage)
+— is attributable to the delta-method approximation breaking down under high
+genetic drift ($N_e = 1{,}000$) and near $\alpha \approx 0.5$; improved
+uncertainty quantification for $\alpha$ is a priority for future development.
 
 Application to the 1000 Genomes Project 2022 dataset yielded eight biologically
 interpretable admixture events consistent with published population histories,

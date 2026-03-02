@@ -174,9 +174,14 @@ exponential with rate $\lambda = 2T/100$ per~cM, the conditional expectation is
 \end{equation}
 which is the model used in the IBD likelihood (see below).
 
-The MCMC jointly samples both $\alpha$ and $T$ as free parameters.
-The joint log-likelihood combines the $F_2$ term (which informs $\alpha$)
-with the IBD term (which informs $T$):
+The MCMC samples $\alpha$ and $T$ simultaneously as free parameters.
+The log-likelihood combines the $F_2$ term (which informs $\alpha$) with
+the IBD term (which informs $T$); we note that in the current parameterisation
+these two terms are approximately separable --- $F_2$ constrains $\alpha$
+independently of $T$, and the IBD term depends on $T$ but not $\alpha$ ---
+so the primary benefit of the joint sampler is consistent posterior
+propagation and the ability to extend the likelihood with cross-terms in
+future work:
 \begin{equation}
   \log p(\mathbf{F}_2, \mathbf{L} \mid \alpha, T)
   = \sum_{i<j} -\frac{1}{2}
@@ -207,15 +212,18 @@ the shift ensures $T > 5$ consistent with the 2~cM detection threshold.
 \emph{Calibration note.}
 For populations with effective size $N_e \gg T$ (typical of humans with
 $N_e \sim 10^4$), the observed mean IBD length is shifted from
-equation~(\ref{eq:ibd_trunc}) by a sample-size-dependent correction
-$\approx 2N_e / n_{\mathrm{source}}$ generations \citep{Palamara2012}.
-This correction is small when whole-genome IBD data are available
-(many segments reduce the correction); our 1000~Genomes analysis uses
-hap-ibd on all autosomes ($\approx35$~Morgan), providing sufficient
-signal.
+equation~(\ref{eq:ibd_trunc}) by a sample-size-dependent coalescence
+correction $\approx 2N_e / n_{\mathrm{source}}$ generations
+\citep{Palamara2012}.
+This correction is expected to be small in whole-genome applications
+(large number of IBD segments reduces its variance); when \hapgraph{} is
+applied to real data with hap-ibd run on all autosomes
+($\approx 35$~Morgan), this correction should be negligible relative to
+the IBD signal.
 For the simulation benchmark, which uses a single 50~Mbp chromosome
-($0.5$~Morgan), timing estimates carry larger uncertainty and should be
-interpreted with caution.
+($0.5$~Morgan), this correction is substantial and timing estimates
+carry larger systematic uncertainty; they should be interpreted with caution
+(see Results).
 Posterior inference uses the No-U-Turn Sampler (NUTS)
 \citep{Hoffman2014} as implemented in PyMC \citep{AbrilPimentel2023}.
 We run four independent chains with 1000 adaptation steps and 1000 posterior
@@ -241,10 +249,12 @@ manipulation.
 IBD segment detection is handled externally by \hapibd{} \citep{Browning2020}
 and ingested as a precomputed tabular file; this design allows users to
 substitute alternative IBD callers without modifying the inference code.
-On a single CPU core (2.4~GHz Intel Xeon), the complete pipeline from phased
-VCF to an annotated admixture graph with posterior timing estimates completes
-in under 2~hours for 26 populations and 3202 samples across approximately
-500K filtered SNPs.
+On a single CPU core (2.4~GHz Intel Xeon), Stage~I (F-statistics + greedy
+topology search) completes in under 2~hours for 26 populations and 3202
+samples across approximately 500K filtered SNPs.
+Stage~II (IBD-based timing) requires pre-computation of phased IBD segments
+by \hapibd{}, which adds data-dependent overhead; timing estimation for the
+1kGP populations is deferred to future work.
 
 \subsection*{Simulation Benchmarking Framework}
 

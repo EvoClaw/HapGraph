@@ -44,9 +44,15 @@ inferring both admixture sources and timing from LD patterns; however, it
 operates on a source--target model rather than a full graph topology and does
 not incorporate identity-by-descent (IBD) statistics.
 More recently, IBD-based approaches have exploited the observation that the
-expected mean length of inter-population IBD segments decays as $100/T$~cM,
-providing a direct genomic clock on admixture timing
+expected mean length of inter-population IBD segments decays approximately
+as $100/T$~cM (ancestry-tract approximation for segments within a single
+admixed haplotype), providing a direct genomic clock on admixture timing
 \citep{Browning2020,Palamara2012}.
+For cross-population IBD between two modern lineages separated by $T$
+generations, the correct rate is $1/(2T)$ per Morgan, giving
+$\mathbb{E}[L] = 50/T$~cM; after conditioning on detection above a minimum
+length $\ell_{\min}$, the expectation is $50/T + \ell_{\min}$
+(see Methods, equation~\ref{eq:ibd_trunc}).
 Despite this complementarity, current practice couples the two estimation
 problems only sequentially: users infer topology with F-statistic tools and
 subsequently run a timing method under the fixed topology, propagating
