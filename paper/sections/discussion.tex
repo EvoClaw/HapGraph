@@ -2,9 +2,14 @@
 % Target: 400+ words, 3+ citations
 
 \hapgraph{} demonstrates that F-statistics and IBD sharing statistics can be
-combined in a single framework to address a long-standing gap in population
-genetic inference: estimating not only the topology and proportions of an
-admixture graph but also the timing of each admixture event.
+combined in a two-stage integrated pipeline to address a long-standing gap
+in population genetic inference: estimating not only the topology and
+proportions of an admixture graph but also the timing of each admixture event.
+We emphasise that the two stages are deliberately \emph{sequential} rather
+than ``jointly'' inferred in the full Bayesian sense: the topology is treated
+as fixed when estimating $T$, not as a random variable.
+This design choice sacrifices coherent joint uncertainty propagation for
+computational tractability at $N \gtrsim 10$ populations.
 Here we discuss the design trade-offs that shaped the current implementation,
 the limitations revealed by our simulation experiments, and the directions
 that would most improve the tool.
@@ -27,21 +32,26 @@ The two-stage approach thus represents a practical compromise between
 statistical completeness and scalability, a design philosophy shared by the
 wider family of greedy-then-refine methods in phylogenetics.
 
-\paragraph{Edge over-detection in simple scenarios.}
+\paragraph{Edge over-detection and the stopping criterion.}
 In S2 ($K=1$), the greedy search inferred the correct number of admixture
-edges in 45\% of seeds; in the remaining 55\%, a spurious second edge was
-added to the same target population.
-Notably, the precision on admixture \emph{target populations} was 100\%:
-no non-admixed population was falsely labelled as admixed.
-The over-detection reflects the BIC penalty being insufficiently
-restrictive for seven populations, where the ratio of free parameters to
-F-statistics is high enough that a spurious secondary source can improve
-the fit beyond the penalty.
+edges in 45\% of seeds; in the remaining 55\%, a second edge was added to
+the same target population (precision on admixed \emph{populations} = 100\%).
+This behaviour arose because the benchmarks were run without the optional
+uniqueness-per-target constraint; with the constraint enabled, over-detection
+to the same target is prevented entirely.
+More fundamentally, the stopping criterion in equation~(\ref{eq:penalty})
+is a heuristic that combines a BIC-inspired penalty with a safety constant;
+it is not a formally derived information criterion, because the $N(N-1)/2$
+pairwise $F_2$ statistics are correlated across loci, violating the
+independence assumption underlying BIC.
+The constant 5.0 was chosen empirically to achieve 0\% false positive rate
+on pure trees (S1) with the present simulation parameters; it may need
+recalibration for datasets with different SNP density or population size.
 In S3 ($K=2$, ten populations), the richer F-statistic structure provides
-stronger BIC discrimination, and the exact topology was recovered in 100\%
+stronger penalty discrimination, and the exact topology was recovered in 100\%
 of seeds.
 We recommend users treat the inferred $K$ as an upper bound in data-sparse
-settings, and use $F_4$ consistency tests \citep{Patterson2012} to
+settings and use $F_4$ consistency tests \citep{Patterson2012} to
 independently validate detected events.
 
 \paragraph{Alpha uncertainty quantification.}

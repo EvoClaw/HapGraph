@@ -75,21 +75,40 @@ At each iteration, populations $C$ whose $F_3(C;\,A,B)$ Z-score falls below
 $-2.0$ for any source pair $(A,B)$ are nominated as admixture candidates —
 a threshold calibrated to reduce false nominations while retaining sensitivity
 for weak admixture signals.
-For each candidate, we propose placing an admixture edge from a source node to
-$C$ and score it by the change in a BIC-adjusted log-likelihood:
+The log-likelihood of the graph at each greedy step is evaluated under a
+Gaussian approximation for the $F_2$ statistics:
 \begin{equation}
-  \Delta\mathrm{BIC} = \Delta \log \mathcal{L}
-                        - \bigl(5.0 + 0.5\log(\max(S,2))\bigr),
-  \label{eq:bic}
+  \log \mathcal{L} = \sum_{i<j} -\frac{1}{2}
+    \left(\frac{F_2^{\mathrm{obs}}(i,j) - F_2^{\mathrm{exp}}(i,j)}
+               {\hat{\sigma}_{ij}}\right)^{\!2},
+  \label{eq:f2_ll}
 \end{equation}
-where $S$ is the number of F-statistics contributing to the fit.
-The scale-adaptive penalty in equation~(\ref{eq:bic}) counteracts the
-tendency of greedy graph searches to accumulate spurious edges as the
-observation count grows \citep{Pickrell2012}.
-An edge is added if and only if $\Delta\mathrm{BIC} > 0$.
-To avoid identifiability problems, each population may be the target of at
-most one admixture edge; the search terminates when no remaining proposal
-achieves a positive BIC improvement.
+where $F_2^{\mathrm{exp}}(i,j)$ is the expected $F_2$ under the proposed graph
+topology with branch lengths fitted by non-negative least squares (NNLS)
+to the observed $F_2$ matrix, and $\hat{\sigma}_{ij}$ is the block-jackknife
+standard error.
+This Gaussian model for $F_2$ is standard in the admixture graph literature
+\citep{Pickrell2012,Patterson2012}.
+
+For each candidate edge, the improvement in log-likelihood is penalised by a
+scale-adaptive stopping criterion:
+\begin{equation}
+  \Delta\mathcal{P} = \Delta \log \mathcal{L}
+                        - \bigl(5.0 + 0.5\log(\max(S,2))\bigr),
+  \label{eq:penalty}
+\end{equation}
+where $S = N(N-1)/2$ is the number of observed $F_2$ pairs.
+This criterion is inspired by the BIC penalty $(k/2)\log n$ with $k = 1$
+new free parameter (the admixture proportion $\alpha$; branch lengths are
+immediately refitted by NNLS and do not count as additional free parameters)
+and $n = S$ observations, augmented by a safety constant of 5.0 to suppress
+false positives in small-$N$ regimes.
+We note that $S$ is not a count of independent observations (individual
+$F_2$ values are correlated across loci), so equation~(\ref{eq:penalty})
+is a heuristic stopping criterion rather than a formally derived information
+criterion.
+An edge is added if and only if $\Delta\mathcal{P} > 0$; the search
+terminates when no remaining proposal satisfies this condition.
 
 \subsection*{Admixture Proportion Estimation via $F_3$ Method-of-Moments}
 
@@ -122,21 +141,40 @@ admixture signal.
 
 \subsection*{Stage II: IBD-Based Timing Estimation}
 
-Under a single-pulse admixture model, IBD segments shared between the admixed
-population $C$ and its source populations are broken down by recombination
-at rate $r = 0.01$ per generation per cM.
-For segments longer than a minimum length $\ell_{\min}$, the expected mean
-segment length decreases inversely with time:
+Under a single-pulse admixture model, a haplotype segment of source ancestry
+introduced into the admixed population $C$ at generation $T$ in the past
+is broken by recombination over $T$ subsequent meioses.
+The expected length of such a \emph{cross-population} IBD segment detected
+between an individual in $C$ and an individual in the source population
+is therefore:
 \begin{equation}
   \mathbb{E}[\bar{L}] = \frac{100}{T} \quad\text{(cM)},
   \label{eq:ibd_timing}
 \end{equation}
 where $T$ is the number of generations since the admixture event
-\citep{Browning2020,Palamara2012}.
+\citep{Palamara2012}.
+This is the \emph{ancestry tract} relationship, not the within-population IBD
+formula: for IBD between two individuals sharing a common ancestor $g$
+generations ago in a randomly mating population, the expected segment length
+is $100/(2g)$~cM (two lineages each contributing $g$ meioses to the path
+length).
+For cross-population admixture-derived IBD, only one lineage carries the
+broken-up ancestral tract ($T$ meioses on the admixed side); the source
+individual's copy is essentially unbroken.
+Hence $\mathbb{E}[\bar{L}] = 100/T$, not $100/(2T)$, for this class of
+segments \citep{Palamara2012}.
+
 IBD segments are detected using \hapibd{} \citep{Browning2020} at a minimum
-length of $\ell_{\min} = 2$~cM, which constrains reliable inference to
-$T \in [5,\, 50]$ generations — the range over which segments of this length
-are detectable and whose expected length $\bar{L}$ is well-estimated.
+length of $\ell_{\min} = 2$~cM.
+When the length distribution is conditioned on $L > \ell_{\min}$, the
+conditional expectation is strictly larger than $100/T$ (truncated
+exponential); for $T \leq 50$ generations, $\ell_{\min}/\mathbb{E}[\bar{L}]
+= 0.1$, so the bias is $< 10\%$ and is absorbed into the heteroscedastic
+noise term described below.
+The 2~cM threshold also constrains inference to $T \in [5,\, 50]$ generations:
+events older than 50 generations produce segments predominantly below 2~cM,
+while very recent events ($T < 5$) produce segments too long to separate
+from background relatedness \citep{Browning2020}.
 
 Given fixed $\hat{\alpha}$ from Stage I, the log-likelihood of the observed
 mean IBD lengths $\{L_i\}$ over source-clade population pairs is

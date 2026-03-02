@@ -17,7 +17,7 @@ In S1 (six populations, no admixture, $K=0$), the greedy search never added
 a spurious admixture edge: the false positive rate was $0/20 = 0\%$ across
 all 20 seeds (Table~\ref{tab:simulation}).
 This specificity is governed by the BIC-adjusted stopping criterion
-(equation~\ref{eq:bic}): even when individual F-statistics carry noise from
+(equation~\ref{eq:penalty}): even when individual F-statistics carry noise from
 finite sampling, the penalty consistently outweighs any likelihood gain from
 a spurious edge.
 The result confirms that \hapgraph{} does not over-infer admixture in the
@@ -29,18 +29,21 @@ computational efficiency of the F-statistics-only greedy step.
 \subsection*{S2: Parameter Recovery for a Single Admixture Event}
 
 In S2 (seven populations, $K=1$, $\alpha \sim \mathrm{Uniform}(0.1, 0.5)$,
-$T \sim \mathrm{Uniform}(10, 50)$ generations), the greedy search achieved
-a recall of 1.00 on the admixture target population: the true admixed
-population was always identified as a candidate.
+$T \sim \mathrm{Uniform}(10, 50)$ generations), the greedy search (run here
+without a uniqueness constraint on admixture targets) achieved a recall of
+1.00: the true admixed population was always identified.
 In 9 of 20 seeds (45\%), the search inferred exactly $K=1$; in the remaining
-11 seeds, a second admixture edge was added to the same target population,
-inflating the count to $K=2$.
-This over-detection does not add spurious admixed \emph{populations} ---
-greedy precision on target populations is 1.00 --- but rather infers an
-additional secondary source, likely because the BIC penalty is insufficient
-to distinguish a two-source from a one-source model for this population size
-and sequence length.
-We return to the implications of this behaviour in the Discussion.
+11 seeds, a second edge was added to the same already-detected target,
+inflating the inferred event count to $K=2$ (detected target population
+precision = 1.00, as no non-admixed population was mislabelled).
+The secondary edge infers a redundant additional source for the same
+population, reflecting a model-selection degeneracy in small graphs: with
+seven populations, the log-likelihood gain from a second source sometimes
+exceeds the stopping threshold even when the true model has only one source.
+The current implementation offers an optional uniqueness constraint (one
+admixture edge per target population) that eliminates this over-detection
+at the cost of missing genuine multi-source events; we leave the choice to
+the analyst and return to its implications in the Discussion.
 
 Under the oracle topology (the true $K=1$ graph), the $F_3$ method-of-moments
 estimator recovered admixture proportions with a mean absolute error (MAE)

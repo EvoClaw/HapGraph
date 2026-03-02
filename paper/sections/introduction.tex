@@ -64,9 +64,9 @@ topology, proportions, and timing, yielding credible intervals rather than
 the point estimates returned by current pipelines.
 
 \paragraph{This work: \hapgraph{}.}
-We introduce \hapgraph{}, a Python package for joint admixture graph inference
-using F-statistics for topology and proportion estimation (Stage I) followed
-by Bayesian IBD-based timing inference (Stage II).
+We introduce \hapgraph{}, a Python package implementing a two-stage integrated
+pipeline: Stage I uses F-statistics for topology and proportion estimation;
+Stage II applies Bayesian IBD-based timing inference on the fixed topology.
 The two stages are deliberately decoupled: preliminary experiments showed
 that incorporating IBD into the topology search causes systematic edge
 over-detection; IBD is therefore reserved exclusively for timing inference
@@ -89,8 +89,8 @@ as it requires pre-computation of IBD segments by \hapibd{} and is
 deferred to future work.
 
 \paragraph{Contributions.}
-(i) A two-stage pipeline integrating F-statistics and IBD sharing for joint
-admixture graph topology inference and timing estimation;
+(i) A two-stage integrated pipeline that combines F-statistics for topology
+and proportion inference with IBD-based Bayesian timing estimation;
 (ii) a topology-independent $F_3$ method-of-moments estimator for admixture
 proportions, robust to neighbor-joining misplacement;
 (iii) a BIC-based greedy search with a scale-adaptive stopping criterion
